@@ -10,9 +10,9 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Add Postgres
+        var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? "";
         services.AddDbContext<MessagingContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(connectionString));
 
         // Register contexts
         services.AddScoped<IMessagingContext>(provider =>

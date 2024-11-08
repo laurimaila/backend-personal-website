@@ -22,23 +22,20 @@
     platform: linux/arm64
 
   backend:
-    build:
-      context: backend
-      target: production
+    image: ghcr.io/laurimaila/backend-personal-website:latest
     ports:
-      - "3600:3000"
+      - "3600:80"
     depends_on:
       - db
       - liquibase
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:3000
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:80
+      CONNECTION_STRING: Host=db;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
 
   db:
     image: postgres:17-alpine
     restart: always
-    ports:
-      - "5432:5432"
     volumes: # Store data in a docker volume
       - db-prod:/var/lib/postgresql/data
     environment:
