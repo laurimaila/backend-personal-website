@@ -16,11 +16,13 @@ public class MessageRepository(IMessagingContext context, ILogger<MessageReposit
 {
     public async Task<IEnumerable<Message>> GetMessagesAsync(int limit)
     {
-        return await context.Messages
+        var messages = await context.Messages
             .OrderByDescending(m => m.CreatedAt)
             .Take(limit)
             .OrderBy(m => m.CreatedAt)
             .ToListAsync();
+
+        return messages ?? Enumerable.Empty<Message>();
     }
 
     public async Task<Message> CreateMessageAsync(Message message)

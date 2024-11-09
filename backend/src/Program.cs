@@ -15,9 +15,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins")
-                                 .Get<string[]>()
-                             ?? [];
+        var allowedOrigins = builder.Configuration.GetSection("CorsOrigins").Get<string[]>() ?? [];
         policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()

@@ -21,10 +21,4 @@
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
         <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0"/>
     </ItemGroup>
-
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="backend.Tests\obj\backend.Tests.csproj.nuget.dgspec.json" />
-      <_ContentIncludedByDefault Remove="backend.Tests\obj\project.assets.json" />
-      <_ContentIncludedByDefault Remove="backend.Tests\obj\project.packagespec.json" />
-    </ItemGroup>
 </Project>
