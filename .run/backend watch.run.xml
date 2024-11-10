@@ -1,0 +1,17 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="backend watch" type="RunDotNetWatch" factoryName="RunDotNetWatch">
+    <option name="envs">
+      <map>
+        <entry key="ASPNETCORE_ENVIRONMENT" value="Development" />
+      </map>
+    </option>
+    <option name="exePath" value="$PROJECT_DIR$/backend/bin/Debug/net8.0/backend.exe" />
+    <option name="programParameters" value="" />
+    <option name="projectFilePath" value="$PROJECT_DIR$/backend/backend.csproj" />
+    <option name="projectTfm" value="net8.0" />
+    <option name="verbosity" value="VERBOSE" />
+    <option name="watchParameters" value="" />
+    <option name="workingDirectory" value="$PROJECT_DIR$/backend" />
+    <method v="2" />
+  </configuration>
+</component>
