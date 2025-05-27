@@ -31,6 +31,12 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var databaseInitService = scope.ServiceProvider.GetRequiredService<DatabaseInitService>();
+    await databaseInitService.InitializeAsync();
+}
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseWebSockets();
