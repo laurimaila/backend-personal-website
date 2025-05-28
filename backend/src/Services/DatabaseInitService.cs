@@ -1,10 +1,10 @@
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Npgsql;
 
 namespace backend.Services;
 
@@ -13,7 +13,6 @@ public class DatabaseInitService
     private readonly MessagingContext _dbContext;
     private readonly IConfiguration _configuration;
     private readonly ILogger<DatabaseInitService> _logger;
-    private readonly string _connectionString;
 
     public DatabaseInitService(
         MessagingContext dbContext,
@@ -23,16 +22,15 @@ public class DatabaseInitService
         _dbContext = dbContext;
         _configuration = configuration;
         _logger = logger;
-        _connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ??
-            configuration.GetConnectionString("DefaultConnection");
     }
 
     public async Task InitializeAsync()
     {
         try
         {
-            _logger.LogInformation("Starting database init");
+            _logger.LogInformation("Starting database initialization");
 
+            // Ensure the database exists
             await _dbContext.Database.EnsureCreatedAsync();
 
             // Check if the messages table exists
@@ -41,7 +39,7 @@ public class DatabaseInitService
             if (!tableExists)
             {
                 _logger.LogWarning("Messages table not found, creating the table");
-                await CreateMessagesTableAsync();
+                await CreateTablesAsync();
                 _logger.LogInformation("Messages table created successfully");
             }
             else
@@ -60,49 +58,38 @@ public class DatabaseInitService
     {
         try
         {
-            await using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            await using var command = new NpgsqlCommand(
-                "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = @tableName)",
-                connection);
-
-            command.Parameters.AddWithValue("tableName", tableName);
-
-            _logger.LogInformation("Checking if table {TableName} exists", tableName);
-            var result = await command.ExecuteScalarAsync();
-            var exists = result != null && (bool)result;
-            _logger.LogInformation("Table {TableName} exists: {Exists}", tableName, exists);
-            return exists;
+            await _dbContext.Database.ExecuteSqlRawAsync($"SELECT 1 FROM {tableName} LIMIT 1");
+            return true;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogError(ex, "Error checking if table {TableName} exists", tableName);
             return false;
         }
     }
 
-    private async Task CreateMessagesTableAsync()
+    private async Task CreateTablesAsync()
     {
         try
         {
-            string createTableSql = @"
-                CREATE TABLE IF NOT EXISTS messages (
-                    id SERIAL PRIMARY KEY,
-                    content TEXT NOT NULL,
-                    creator_name TEXT NOT NULL, 
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )";
+            // Use init.sql file to create the tables
+            string sqlFilePath = Path.Combine(AppContext.BaseDirectory, "src", "Data", "Sql", "init.sql");
 
-            await using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();
+            if (!File.Exists(sqlFilePath))
+            {
+                _logger.LogError("init.sql file not found at {Path}", sqlFilePath);
+                throw new FileNotFoundException("SQL initialization file not found", sqlFilePath);
+            }
 
-            await using var command = new NpgsqlCommand(createTableSql, connection);
-            await command.ExecuteNonQueryAsync();
+            string createTableSql = await File.ReadAllTextAsync(sqlFilePath);
+            _logger.LogDebug("Loaded SQL from file: {SqlFilePath}", sqlFilePath);
+
+            // Execute raw SQL using EF Core
+            await _dbContext.Database.ExecuteSqlRawAsync(createTableSql);
+            _logger.LogInformation("Successfully executed init.sql");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating messages table", ex);
+            _logger.LogError(ex, "Error creating tables from init.sql");
             throw;
         }
     }

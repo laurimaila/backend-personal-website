@@ -7,8 +7,4 @@ RUN dotnet restore
 
 COPY . ./
 
-EXPOSE 3000
-
-ENV ASPNETCORE_URLS=http://+:3000
-
-ENTRYPOINT ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:3000"]
+ENTRYPOINT ["dotnet", "watch", "run"]

@@ -5,7 +5,7 @@
     ports:
       - "3002:5432"
     volumes:
-      - personal-website-db-dev:/var/lib/postgresql/data
+      - personal-website-data-dev:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
@@ -16,16 +16,17 @@
       context: ./backend
       dockerfile: Dockerfile.dev
     ports:
-      - "3000:3000"
+      - "3000:8080"
     volumes:
       - ./backend:/app
       - /app/bin
       - /app/obj
     environment:
+      - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_ENVIRONMENT=Development
       - CONNECTION_STRING=Host=db;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
     depends_on:
       - db
 
 volumes:
-  personal-website-db-dev:
+  personal-website-data-dev:

@@ -8,6 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <None Update="src/Data/Sql/*.sql">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="BCrypt.Net-Core" Version="1.6.0" />
         <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.*">

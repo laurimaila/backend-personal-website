@@ -43,6 +43,9 @@ public class MessagingContext : DbContext, IMessagingContext
             entity.Property(e => e.CreatedAt)
                 .HasColumnName("created_at")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.Property(e => e.ModifiedAt)
+                .HasColumnName("modified_at");
         });
     }
 }
@@ -50,9 +53,9 @@ public class MessagingContext : DbContext, IMessagingContext
 [Table("messages")]
 public class Message
 {
-    [Key] [Column("id")] public int Id { get; set; }
+    [Key][Column("id")] public int Id { get; set; }
 
-    [Required] [Column("content")] public string Content { get; set; } = string.Empty;
+    [Required][Column("content")] public string Content { get; set; } = string.Empty;
 
     [Required]
     [Column("creator")]
@@ -60,4 +63,5 @@ public class Message
     public string Creator { get; set; } = string.Empty;
 
     [Column("created_at")] public DateTime CreatedAt { get; set; }
+    [Column("modified_at")] public DateTime? ModifiedAt { get; set; }
 }

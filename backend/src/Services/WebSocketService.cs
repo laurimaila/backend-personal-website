@@ -56,11 +56,9 @@ public class WebSocketService(
                     continue;
                 }
 
-                var validationResults = new List<ValidationResult>();
-                if (!Validator.TryValidateObject(incomingMessage, new ValidationContext(incomingMessage),
-                        validationResults, true))
+                var (isValid, errors) = validationService.Validate(incomingMessage);
+                if (!isValid)
                 {
-                    var errors = validationResults.Select(x => x.ErrorMessage).ToList();
                     await SendToClient(webSocket, WebSocketMessageTypes.Error, new ErrorDto
                     {
                         Code = "VALIDATION_ERROR",

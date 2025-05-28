@@ -16,12 +16,14 @@ public class MessageRepository(IMessagingContext context, ILogger<MessageReposit
 {
     public async Task<IEnumerable<Message>> GetMessagesAsync(int limit)
     {
+        logger.LogInformation("Fetching {Limit} messages", limit);
         var messages = await context.Messages
             .OrderByDescending(m => m.CreatedAt)
             .Take(limit)
             .OrderBy(m => m.CreatedAt)
             .ToListAsync();
 
+        logger.LogInformation("Successfully fetched {Count} messages", messages.Count());
         return messages ?? Enumerable.Empty<Message>();
     }
 
@@ -29,6 +31,7 @@ public class MessageRepository(IMessagingContext context, ILogger<MessageReposit
     {
         await context.Messages.AddAsync(message);
         await context.SaveChangesAsync();
+        logger.LogInformation("Successfully created message {MessageId} from {CreatorName}", message.Id, message.Creator);
         return message;
     }
 
@@ -36,6 +39,7 @@ public class MessageRepository(IMessagingContext context, ILogger<MessageReposit
         int page,
         int pageSize)
     {
+        logger.LogInformation("Fetching page {Page} with page size {PageSize}", page, pageSize);
         var query = context.Messages.OrderByDescending(m => m.CreatedAt);
         var total = await query.CountAsync();
 
@@ -50,7 +54,7 @@ public class MessageRepository(IMessagingContext context, ILogger<MessageReposit
 
     public async Task<bool> DeleteAllMessagesAsync()
     {
-        // Remove all messages
+        logger.LogWarning("Deleting all chat messages");
         context.Messages.RemoveRange(context.Messages);
         var deleted = await context.SaveChangesAsync();
         return deleted > 0;

@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 builder.Services.AddHealthChecks();
-builder.Services.AddSingleton<IValidationService, ValidationService>();
+builder.Services.AddScoped<IValidationService, ValidationService>();
 builder.Services.AddApplicationServices(builder.Configuration);
 
 builder.Services.AddCors(options =>

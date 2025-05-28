@@ -23,7 +23,6 @@ RUN addgroup --system --gid 1001 dotnet && \
 COPY --from=build --chown=appuser:dotnet /app/publish .
 
 # Configure production environment
-ENV ASPNETCORE_URLS=http://+:80
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 USER appuser
