@@ -12,7 +12,7 @@ public interface IMessageRepository
     Task<bool> DeleteAllMessagesAsync();
 }
 
-public class MessageRepository(IMessagingContext context, ILogger<MessageRepository> logger) : IMessageRepository
+public class MessageRepository(IApplicationContext context, ILogger<MessageRepository> logger) : IMessageRepository
 {
     public async Task<IEnumerable<Message>> GetMessagesAsync(int limit)
     {

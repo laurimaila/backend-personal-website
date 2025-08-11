@@ -9,7 +9,7 @@ namespace backend.Services;
 
 public interface IWebSocketService
 {
-    Task HandleWebSocketConnection(WebSocket webSocket);
+    Task HandleWebSocketConnection(WebSocket webSocket, HttpContext httpContext);
     Task BroadcastMessage(object message);
     Task SendToClient(WebSocket socket, string type, object payload);
 }
@@ -26,10 +26,25 @@ public class WebSocketService(
 
     private static readonly List<WebSocket> Clients = [];
 
-    public async Task HandleWebSocketConnection(WebSocket webSocket)
+    public async Task HandleWebSocketConnection(WebSocket webSocket, HttpContext httpContext)
     {
+        // Get authenticated user from the HTTP context set by middleware
+        var authenticatedUser = httpContext.Items["User"] as User;
+
+        if (authenticatedUser == null)
+        {
+            logger.LogWarning("Unauthorized WebSocket connection attempt");
+            await webSocket.CloseAsync(
+                WebSocketCloseStatus.PolicyViolation,
+                "Authentication required",
+                CancellationToken.None);
+            return;
+        }
+
         Clients.Add(webSocket);
-        logger.LogInformation("New client connected. Total clients: {Count}", Clients.Count);
+        logger.LogInformation("Authenticated WebSocket client connected: {Username}. Total clients: {Count}",
+        authenticatedUser.Username, Clients.Count);
+
         try
         {
             var buffer = new byte[1024 * 4];
@@ -45,7 +60,7 @@ public class WebSocketService(
                     continue;
 
                 var messageJson = Encoding.UTF8.GetString(buffer, 0, received.Count);
-                var incomingMessage = JsonSerializer.Deserialize<MessageDto>(messageJson);
+                var incomingMessage = JsonSerializer.Deserialize<CreateMessageDto>(messageJson);
                 if (incomingMessage is null)
                 {
                     await SendToClient(webSocket, WebSocketMessageTypes.Error, new ErrorDto
@@ -67,18 +82,19 @@ public class WebSocketService(
                     continue;
                 }
 
-                var savedMessage = await messageService.CreateMessageAsync(incomingMessage);
+                var savedMessage = await messageService.CreateMessageAsync(incomingMessage, authenticatedUser);
                 await BroadcastMessage(savedMessage);
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error handling WebSocket connection");
+            logger.LogError(ex, "Error handling WebSocket connection for user {Username}", authenticatedUser.Username);
         }
         finally
         {
             Clients.Remove(webSocket);
-            logger.LogInformation("Client disconnected. Total clients: {Count}", Clients.Count);
+            logger.LogInformation("Client disconnected: {Username}. Total clients: {Count}",
+            authenticatedUser.Username, Clients.Count);
         }
     }
 

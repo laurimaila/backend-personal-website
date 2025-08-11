@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using backend.Models;
 using backend.DTOs;
 using backend.Services;
+using backend.Attributes;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/messages")]
+[RequireAuth]
 public class MessagesController(IMessageService messageService, ILogger<MessagesController> logger) : ControllerBase
 {
     [HttpGet]
@@ -42,6 +44,7 @@ public class MessagesController(IMessageService messageService, ILogger<Messages
     }
 
     [HttpGet("tukaani")]
+    [AllowAnonymous]
     public async Task<ActionResult<bool>> TestDeleteAllMessages()
     {
         try

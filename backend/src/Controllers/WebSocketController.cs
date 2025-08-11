@@ -14,7 +14,7 @@ public class WebSocketController(IWebSocketService webSocketService)
         if (HttpContext.WebSockets.IsWebSocketRequest)
         {
             using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            await webSocketService.HandleWebSocketConnection(webSocket);
+            await webSocketService.HandleWebSocketConnection(webSocket, HttpContext);
         }
         else
         {

@@ -16,6 +16,11 @@ public class ValidationService : IValidationService
         var isValid =
             Validator.TryValidateObject(model, validationContext, validationResults, validateAllProperties: true);
 
-        return (isValid, validationResults.Select(r => r.ErrorMessage).ToList());
+        // Handle null error messages
+        var errors = validationResults
+            .Select(r => r.ErrorMessage ?? "Unknown validation error")
+            .ToList();
+
+        return (isValid, errors);
     }
 }

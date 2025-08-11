@@ -13,19 +13,21 @@ public static class ServiceCollectionExtensions
         var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ??
                                configuration.GetConnectionString("DefaultConnection");
 
-        services.AddDbContext<MessagingContext>(options =>
+        services.AddDbContext<ApplicationContext>(options =>
             options.UseNpgsql(connectionString));
 
         // Register contexts
-        services.AddScoped<IMessagingContext>(provider =>
-            provider.GetRequiredService<MessagingContext>());
+        services.AddScoped<IApplicationContext>(provider =>
+            provider.GetRequiredService<ApplicationContext>());
 
         // Register repositories
         services.AddScoped<IMessageRepository, MessageRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         // Register services
         services.AddScoped<IMessageService, MessageService>();
         services.AddScoped<IWebSocketService, WebSocketService>();
+        services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<DatabaseInitService>();
 
         return services;

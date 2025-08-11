@@ -1,13 +1,14 @@
 using backend.Tools;
 using backend.Extensions;
 using backend.Services;
+using backend.Middleware;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-
 builder.Services.AddHealthChecks();
+
 builder.Services.AddScoped<IValidationService, ValidationService>();
 builder.Services.AddApplicationServices(builder.Configuration);
 
@@ -31,26 +32,35 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var databaseInitService = scope.ServiceProvider.GetRequiredService<DatabaseInitService>();
-    await databaseInitService.InitializeAsync();
-}
-
-app.UseDefaultFiles();
-app.UseStaticFiles();
-app.UseWebSockets();
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+try
+{
+    using var scope = app.Services.CreateScope();
+    var databaseInitService = scope.ServiceProvider.GetRequiredService<DatabaseInitService>();
+    await databaseInitService.InitializeAsync();
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "Failed to initialize database");
+}
+
 app.UseHttpLogging();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.UseWebSockets();
+
+app.UseAuthenticationMiddleware();
+
 app.UseCors();
-app.UseAuthorization();
+
 app.MapControllers();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
