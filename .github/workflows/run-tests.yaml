@@ -1,0 +1,15 @@
+name: Run tests
+run-name: Run tests - ${{ github.event.head_commit.message }}
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # TODO: add testing to the workflow
+      - run: echo "Not implemented yet, always passing"
