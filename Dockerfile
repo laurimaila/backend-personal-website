@@ -25,6 +25,9 @@ COPY --from=build --chown=appuser:dotnet /app/publish .
 # Configure production environment
 ENV ASPNETCORE_ENVIRONMENT=Production
 
+ARG BACKEND_VERSION=0.0.0
+ENV BACKEND_VERSION=$BACKEND_VERSION
+
 USER appuser
 
 ENTRYPOINT ["dotnet", "backend.dll"]

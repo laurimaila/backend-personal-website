@@ -3,7 +3,7 @@ run-name: Build and push image - ${{ github.event.workflow_run.head_commit.messa
 on:
   workflow_run:
     workflows: ["Run tests"]
-    branches: [main]
+    branches: [main,dev]
     types: [completed]
 
 permissions:
@@ -16,25 +16,53 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
       - name: Set short git commit SHA
         id: vars
         run: |
-          calculatedSha=$(git rev-parse --short ${{ github.sha }})
-          echo "COMMIT_SHORT_SHA=$calculatedSha" >> $GITHUB_ENV
+          FULL_SHA="${{ github.event.workflow_run.head_sha }}"
+          SHORT_SHA="${FULL_SHA:0:7}"
+          echo "COMMIT_SHORT_SHA=$SHORT_SHA" >> $GITHUB_ENV
 
       - name: Extract version from commit message
         id: extract_version
+        env:
+          COMMIT_MSG: ${{ github.event.workflow_run.head_commit.message }}
         run: |
-          commit_msg="${{ github.event.workflow_run.head_commit.message }}"
-          if [[ "$commit_msg" =~ bump:([0-9]+\.[0-9]+\.[0-9]+) ]]; then
-            version="${BASH_REMATCH[1]}"
-            echo "Found version: $version"
-            echo "IMAGE_VERSION=$version" >> $GITHUB_ENV
+          branch_name="${{ github.event.workflow_run.head_branch }}"
+
+          if [[ "$branch_name" == "main" ]]; then
+            TAG_NAME="latest"
+            echo "LATEST_TAG=$TAG_NAME" >> $GITHUB_ENV
+            echo "IS_MAIN=true" >> $GITHUB_ENV
           else
-            echo "No version in commit message, using 'latest'"
-            echo "IMAGE_VERSION=latest" >> $GITHUB_ENV
+            TAG_NAME="latest-dev"
+            echo "LATEST_TAG=$TAG_NAME" >> $GITHUB_ENV
+            echo "IS_MAIN=false" >> $GITHUB_ENV
+          fi
+
+          # Case-insensitive matching
+          shopt -s nocasematch
+
+          if [[ "$COMMIT_MSG" =~ bump:v?([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            version="${BASH_REMATCH[1]}"
+            echo "Found version bump: $version"
+            echo "APP_VERSION=v$version" >> $GITHUB_ENV
+
+            if [[ "$branch_name" == "main" ]]; then
+              echo "IMAGE_VERSION=$version" >> $GITHUB_ENV
+              echo "IS_RELEASE=true" >> $GITHUB_ENV
+            else
+              echo "IMAGE_VERSION=${version}-dev" >> $GITHUB_ENV
+              echo "IS_RELEASE=false" >> $GITHUB_ENV
+            fi
+          else
+            echo "No version bump found."
+            echo "APP_VERSION=$COMMIT_SHORT_SHA" >> $GITHUB_ENV
+            echo "IMAGE_VERSION=$TAG_NAME" >> $GITHUB_ENV
+            echo "IS_RELEASE=false" >> $GITHUB_ENV
           fi
 
       - name: Set up Docker Buildx
@@ -52,6 +80,7 @@ jobs:
         env:
           COMMIT_SHORT_SHA: ${{ env.COMMIT_SHORT_SHA }}
           IMAGE_VERSION: ${{ env.IMAGE_VERSION }}
+          LATEST_TAG: ${{ env.LATEST_TAG }}
           BUILDX_NO_DEFAULT_ATTESTATIONS: 1
         with:
           context: .
@@ -59,8 +88,10 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            BACKEND_VERSION=${{ env.APP_VERSION }}
           tags: |
-            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ env.LATEST_TAG }}
             ghcr.io/${{ github.repository }}:${{ env.IMAGE_VERSION }}
             ghcr.io/${{ github.repository }}:${{ env.COMMIT_SHORT_SHA }}
 
@@ -69,6 +100,5 @@ jobs:
         with:
           package-name: ${{ github.event.repository.name }}
           package-type: 'container'
-          min-versions-to-keep: 10
+          min-versions-to-keep: 15
           delete-only-untagged-versions: false
-

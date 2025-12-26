@@ -71,6 +71,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
         {
             Status = report.Status.ToString(),
             Environment = app.Environment.EnvironmentName,
+            Version = Environment.GetEnvironmentVariable("BACKEND_VERSION") ?? "unknown",
             Timestamp = DateTime.UtcNow
         };
         context.Response.ContentType = "application/json";
