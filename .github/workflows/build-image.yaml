@@ -84,7 +84,7 @@ jobs:
           BUILDX_NO_DEFAULT_ATTESTATIONS: 1
         with:
           context: .
-          file: src/Dockerfile
+          file: src/backend/Dockerfile
           platforms: linux/arm64
           push: true
           cache-from: type=gha

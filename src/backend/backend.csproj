@@ -15,17 +15,17 @@
 
     <ItemGroup>
         <PackageReference Include="BCrypt.Net-Core" Version="1.6.0" />
-        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.*">
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="6.*" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.*">
 
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.*" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.*" />
-        <PackageReference Include="npgsql" Version="8.*" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.*" />
-        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.*" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.*" />
+        <PackageReference Include="npgsql" Version="10.*" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.*" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.*" />
         <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     </ItemGroup>
 </Project>

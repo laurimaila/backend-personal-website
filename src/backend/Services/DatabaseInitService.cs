@@ -77,17 +77,16 @@ public class DatabaseInitService
     {
         try
         {
-            // Use init.sql file to create the tables
-            string sqlFilePath = Path.Combine(AppContext.BaseDirectory, "src", "Data", "Sql", "init.sql");
+            string initSqlFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "Sql", "init.sql");
 
-            if (!File.Exists(sqlFilePath))
+            if (!File.Exists(initSqlFilePath))
             {
-                _logger.LogError("init.sql file not found at {Path}", sqlFilePath);
-                throw new FileNotFoundException("SQL initialization file not found", sqlFilePath);
+                _logger.LogError("init.sql file not found at {Path}", initSqlFilePath);
+                throw new FileNotFoundException("SQL initialization file not found", initSqlFilePath);
             }
 
-            string createTableSql = await File.ReadAllTextAsync(sqlFilePath);
-            _logger.LogDebug("Loaded SQL from file: {SqlFilePath}", sqlFilePath);
+            string createTableSql = await File.ReadAllTextAsync(initSqlFilePath);
+            _logger.LogDebug("Loaded SQL from file: {initSqlFilePath}", initSqlFilePath);
 
             // Execute raw SQL using EF Core
             await _dbContext.Database.ExecuteSqlRawAsync(createTableSql);

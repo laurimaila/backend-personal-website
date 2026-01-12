@@ -112,19 +112,4 @@ public class UserController(IAuthService authService, ILogger<UserController> lo
             user.LastLogin
         });
     }
-
-    [HttpGet("check")]
-    public ActionResult CheckAuthStatus()
-    {
-        try
-        {
-            var hasToken = Request.Cookies.ContainsKey("auth_token");
-            return Ok(new { isAuthenticated = hasToken });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred during auth status check");
-            return StatusCode(500, new { message = "An error occurred while checking authentication status" });
-        }
-    }
 }
