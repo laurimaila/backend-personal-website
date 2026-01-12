@@ -1,18 +1,18 @@
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG TARGETARCH
 
 WORKDIR /src
 
 # Copy .sln and .csproj and restore dependencies
-COPY *.sln .
-COPY backend/*.csproj ./backend/
-RUN dotnet restore -a $TARGETARCH
+COPY *.slnx .
+COPY src/backend/*.csproj ./src/backend/
+RUN dotnet restore ./src/backend/backend.csproj -a $TARGETARCH
 
 # Copy the source code and build
 COPY . .
-RUN dotnet publish -c Release -o /app/publish --no-restore -a $TARGETARCH
+RUN dotnet publish src/backend/backend.csproj -c Release -o /app/publish --no-restore -a $TARGETARCH
 
-FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS runtime
+FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 WORKDIR /app
 
 # Create a non-root user

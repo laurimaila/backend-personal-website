@@ -1,0 +1,11 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+
+WORKDIR /app
+
+COPY src/backend/backend.csproj ./src/backend/
+RUN dotnet restore src/backend/backend.csproj
+
+COPY . .
+
+WORKDIR /app/src/backend
+ENTRYPOINT ["dotnet", "watch", "run"]
