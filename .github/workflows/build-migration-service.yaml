@@ -1,29 +1,23 @@
-name: Build and push go-phys-service
-run-name: Build and push go-phys-service - ${{ github.event.head_commit.message }}
+name: Build and push quarkus-migration-service
 
 on:
   push:
     branches: [dev]
     tags: ['v*.*.*']
     paths:
-      - 'src/physics-service/**'
-      - 'src/protos/**'
-      - '.github/workflows/build-physics-service.yaml'
+      - 'src/migration-service/**'
+      - '.github/workflows/build-migration-service.yaml'
 
 permissions:
   packages: write
   contents: read
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Log in to ghcr.io
         uses: docker/login-action@v3
@@ -32,24 +26,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Extract metadata for image
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/laurimaila/go-phys-svc
+          images: ghcr.io/laurimaila/quarkus-migration-svc
           tags: |
-            type=semver,pattern={{version}}
-            type=sha,prefix=
-
             type=raw,value=latest-dev,enable=${{ github.ref == 'refs/heads/dev' }}
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
 
-      - name: Build and push image
+            type=sha,prefix=
+            type=semver,pattern={{version}}
+
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         env:
           BUILDX_NO_DEFAULT_ATTESTATIONS: 1
         with:
-          context: src/physics-service
+          context: src/migration-service
           platforms: linux/arm64
           push: true
           cache-from: type=gha
@@ -60,7 +57,7 @@ jobs:
       - name: Clean up old package versions
         uses: actions/delete-package-versions@v5
         with:
-          package-name: go-phys-svc
+          package-name: quarkus-migration-svc
           package-type: 'container'
           min-versions-to-keep: 10
           delete-only-untagged-versions: false

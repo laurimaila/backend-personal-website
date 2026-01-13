@@ -10,8 +10,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ??
-                               configuration.GetConnectionString("DefaultConnection");
+        var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING") ?? "";
 
         services.AddDbContext<ApplicationContext>(options =>
             options.UseNpgsql(connectionString));

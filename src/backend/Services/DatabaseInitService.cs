@@ -32,69 +32,12 @@ public class DatabaseInitService
         {
             _logger.LogInformation("Starting database initialization");
 
-            // Ensure the database exists
-            await _dbContext.Database.EnsureCreatedAsync();
-
-            // Check if the messages table exists
-            bool tableExists = await TableExistsAsync("messages");
-
-            if (!tableExists)
-            {
-                _logger.LogWarning("Messages table not found, creating the table");
-                await CreateTablesAsync();
-                _logger.LogInformation("Messages table created successfully");
-            }
-            else
-            {
-                _logger.LogInformation("Messages table already exists");
-            }
-
-            // Add default visitor user
+            // Add a visitor user by default
             await CreateDefaultVisitorUserAsync();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to initialize database");
-            throw;
-        }
-    }
-
-    private async Task<bool> TableExistsAsync(string tableName)
-    {
-        try
-        {
-            var result = await _dbContext.Database.ExecuteSqlAsync(
-                $"SELECT 1 FROM {tableName:raw} LIMIT 1");
-            return true;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
-    }
-
-    private async Task CreateTablesAsync()
-    {
-        try
-        {
-            string initSqlFilePath = Path.Combine(AppContext.BaseDirectory, "Data", "Sql", "init.sql");
-
-            if (!File.Exists(initSqlFilePath))
-            {
-                _logger.LogError("init.sql file not found at {Path}", initSqlFilePath);
-                throw new FileNotFoundException("SQL initialization file not found", initSqlFilePath);
-            }
-
-            string createTableSql = await File.ReadAllTextAsync(initSqlFilePath);
-            _logger.LogDebug("Loaded SQL from file: {initSqlFilePath}", initSqlFilePath);
-
-            // Execute raw SQL using EF Core
-            await _dbContext.Database.ExecuteSqlRawAsync(createTableSql);
-            _logger.LogInformation("Successfully executed init.sql");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating tables from init.sql");
             throw;
         }
     }
