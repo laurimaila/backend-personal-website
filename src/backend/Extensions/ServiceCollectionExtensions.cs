@@ -16,6 +16,12 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<ApplicationContext>(options =>
             options.UseNpgsql(connectionString));
 
+        // Register gRPC Client
+        services.AddGrpcClient<Backend.Protos.PhysicsService.PhysicsServiceClient>(o =>
+        {
+            o.Address = new Uri(Environment.GetEnvironmentVariable("GO_PHYS_SVC_URL") ?? "");
+        });
+
         // Register contexts
         services.AddScoped<IApplicationContext>(provider =>
             provider.GetRequiredService<ApplicationContext>());

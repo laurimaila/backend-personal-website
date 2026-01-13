@@ -3,6 +3,7 @@ using backend.Extensions;
 using backend.Services;
 using backend.Middleware;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Backend.Protos;
 
 var builder = WebApplication.CreateBuilder(args);
 

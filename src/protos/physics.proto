@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+option csharp_namespace = "Backend.Protos";
+
+package PhysicsService;
+
+service PhysicsService {
+  rpc GenerateLorenz (LorenzRequest) returns (stream LorenzResponse);
+}
+
+message LorenzRequest {
+  double sigma = 1;
+  double rho = 2;
+  double beta = 3;
+  double dt = 4;
+  int32 max_iterations = 5;
+}
+
+message LorenzResponse {
+  double x = 1;
+  double y = 2;
+  double z = 3;
+}
