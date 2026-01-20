@@ -35,7 +35,7 @@ jobs:
         with:
           images: ghcr.io/laurimaila/quarkus-migration-svc
           tags: |
-            type=raw,value=latest-dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
 
             type=sha,prefix=
@@ -59,5 +59,5 @@ jobs:
         with:
           package-name: quarkus-migration-svc
           package-type: 'container'
-          min-versions-to-keep: 10
+          min-versions-to-keep: 30
           delete-only-untagged-versions: false

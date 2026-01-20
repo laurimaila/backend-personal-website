@@ -1,33 +1,4 @@
 ﻿services:
-  db:
-    image: postgres:18-alpine
-    restart: always
-    ports:
-      - "3002:5432"
-    volumes:
-      - personal-website-data-dev:/var/lib/postgresql/data
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  migration-service:
-    build:
-      context: src/migration-service
-      dockerfile: Dockerfile
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - JDBC_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
-    depends_on:
-      db:
-        condition: service_healthy
-
   backend:
     build:
       context: .
@@ -57,6 +28,35 @@
         condition: service_completed_successfully
       physics-service:
         condition: service_started
+
+  db:
+    image: postgres:18-alpine
+    restart: always
+    ports:
+      - "3002:5432"
+    volumes:
+      - personal-website-data-dev:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migration-service:
+    build:
+      context: src/migration-service
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - JDBC_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
 
   physics-service:
     build:
