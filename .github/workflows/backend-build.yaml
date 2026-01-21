@@ -1,16 +1,16 @@
-name: Build and push physics svc image
-run-name: Build and push physics svc image - ${{ github.event.head_commit.message }}
+name: Build and push backend image
+run-name: Build and push backend image - ${{ github.event.head_commit.message }}
 
 on:
   push:
     branches: [main, dev]
     tags: ['v*.*.*']
-  pull_request:
-    branches: [main]
-  paths:
-    - 'src/physics-service/**'
-    - 'src/protos/**'
-    - '.github/workflows/physics-svc/**'
+    paths:
+      - 'src/backend/**'
+      - 'src/protos/**'
+      - 'tests/backend/**'
+      - 'backend.slnx'
+      - '.github/workflows/backend/**'
 
 permissions:
   packages: write
@@ -18,9 +18,9 @@ permissions:
 
 jobs:
   lint:
-    uses: ./.github/workflows/physics-svc/lint.yaml
+    uses: ./.github/workflows/backend-lint.yaml
   test:
-    uses: ./.github/workflows/physics-svc/test.yaml
+    uses: ./.github/workflows/backend-test.yaml
 
   build:
     needs: [lint, test]
@@ -29,6 +29,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Extract metadata for image
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha,prefix=
+
+            # dev on dev branch
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -40,36 +52,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for image
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/physics-svc
-          flavor: |
-            latest=${{ startsWith(github.ref, 'refs/tags/') && 'auto' || 'false' }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=sha,prefix=
-
-            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
-
       - name: Build and push image
         uses: docker/build-push-action@v6
         env:
           BUILDX_NO_DEFAULT_ATTESTATIONS: 1
         with:
-          context: src/physics-service
-          platforms: linux/arm64
+          context: .
+          file: src/backend/Dockerfile
+          platforms: linux/arm64,linux/amd64
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            BACKEND_VERSION=${{ steps.meta.outputs.version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Clean up old package versions
         uses: actions/delete-package-versions@v5
         with:
-          package-name: physics-svc
+          package-name: ${{ github.event.repository.name }}
           package-type: 'container'
           min-versions-to-keep: 30
           delete-only-untagged-versions: false

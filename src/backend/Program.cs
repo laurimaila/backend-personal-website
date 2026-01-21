@@ -72,6 +72,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
         {
             Status = report.Status.ToString(),
             Environment = app.Environment.EnvironmentName,
+            // Return BACKEND_VERSION env var if set
             Version = Environment.GetEnvironmentVariable("BACKEND_VERSION") ?? "unknown",
             Timestamp = DateTime.UtcNow,
         };
