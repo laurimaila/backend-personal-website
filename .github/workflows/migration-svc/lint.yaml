@@ -1,0 +1,25 @@
+name: Lint migration service
+run-name: Lint migration service - ${{ github.event.head_commit.message }}
+
+on:
+  workflow_call:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Lint
+        run: mvn -B validate --file src/migration-service/pom.xml
+
+      - name: Format
+        run: mvn spotless:check --file src/migration-service/pom.xml

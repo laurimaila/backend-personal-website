@@ -1,0 +1,19 @@
+name: Test backend
+run-name: Test backend - ${{ github.event.head_commit.message }}
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10
+
+      - name: Run tests
+        run: dotnet test backend.slnx

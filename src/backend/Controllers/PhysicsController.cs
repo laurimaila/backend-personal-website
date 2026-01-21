@@ -1,7 +1,7 @@
-using Backend.Protos;
-using Microsoft.AspNetCore.Mvc;
-using Grpc.Core;
 using System.Text.Json;
+using Backend.Protos;
+using Grpc.Core;
+using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 

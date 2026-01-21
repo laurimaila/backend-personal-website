@@ -72,17 +72,17 @@ public class UserRepository(IApplicationContext context, ILogger<UserRepository>
         logger.LogInformation("User {Username} exists: {Exists}", username, exists);
         return exists;
     }
-    
+
     public async Task UpdateLastLoginAsync(int userId)
     {
         logger.LogInformation("Updating last login for user: {UserId}", userId);
-        
+
         var user = await context.Users.FindAsync(userId);
         if (user != null)
         {
             user.LastLogin = DateTime.UtcNow;
             await context.SaveChangesAsync();
-            
+
             logger.LogInformation("Updated last login for user {UserId}", userId);
         }
     }

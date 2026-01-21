@@ -1,9 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
 using backend.Models;
 using backend.Repositories;
+using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Services;
 
@@ -140,7 +140,7 @@ public class AuthService(
 
             var userIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "nameid")
                           ?? jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
-            
+
             if (userIdClaim == null)
             {
                 logger.LogWarning("Token validation failed: Missing user ID claim");

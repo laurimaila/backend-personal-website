@@ -1,9 +1,9 @@
-using backend.Tools;
 using backend.Extensions;
-using backend.Services;
 using backend.Middleware;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using backend.Services;
+using backend.Tools;
 using Backend.Protos;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 

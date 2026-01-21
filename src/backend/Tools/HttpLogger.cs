@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.HttpLogging;
 
 namespace backend.Tools;
+
 public static class HttpLogger
 {
     public static void ConfigureHttpLogging(IServiceCollection services, bool isDevelopment)

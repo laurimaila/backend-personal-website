@@ -1,0 +1,21 @@
+name: Test physics service
+run-name: Test physics service - ${{ github.event.head_commit.message }}
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.0'
+          cache-dependency-path: src/physics-service/go.sum
+
+      - name: Test
+        working-directory: src/physics-service
+        run: go test -v ./...

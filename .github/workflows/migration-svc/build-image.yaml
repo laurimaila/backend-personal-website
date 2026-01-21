@@ -1,19 +1,28 @@
-name: Build and push quarkus-migration-service
+name: Build and push migration svc image
+run-name: Build and push migration svc image - ${{ github.event.head_commit.message }}
 
 on:
   push:
-    branches: [dev]
+    branches: [main,dev]
     tags: ['v*.*.*']
-    paths:
+  pull_request:
+    branches: [main]
+  paths:
       - 'src/migration-service/**'
-      - '.github/workflows/build-migration-service.yaml'
+      - '.github/workflows/migration-svc/**'
 
 permissions:
   packages: write
   contents: read
 
 jobs:
-  build-and-push:
+  lint:
+    uses: ./.github/workflows/migration-svc/lint.yaml
+  test:
+    uses: ./.github/workflows/migration-svc/test.yaml
+
+  build:
+    needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -33,15 +42,15 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/laurimaila/quarkus-migration-svc
+          images: ghcr.io/${{ github.repository_owner }}/liquibase-svc
+          flavor: |
+             latest=${{ startsWith(github.ref, 'refs/tags/') && 'auto' || 'false' }}
           tags: |
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
-
-            type=sha,prefix=
             type=semver,pattern={{version}}
+            type=sha,prefix=
 
-      - name: Build and push Docker image
+      - name: Build and push image
         uses: docker/build-push-action@v6
         env:
           BUILDX_NO_DEFAULT_ATTESTATIONS: 1
@@ -57,7 +66,7 @@ jobs:
       - name: Clean up old package versions
         uses: actions/delete-package-versions@v5
         with:
-          package-name: quarkus-migration-svc
+          package-name: liquibase-svc
           package-type: 'container'
           min-versions-to-keep: 30
           delete-only-untagged-versions: false
