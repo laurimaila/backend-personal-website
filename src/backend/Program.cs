@@ -17,7 +17,18 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var allowedOrigins = builder.Configuration.GetSection("CorsOrigins").Get<string[]>() ?? [];
+        var allowedOrigins = builder.Configuration
+            .GetSection("CorsOrigins")
+            .Get<string[]>() ?? Array.Empty<string>();
+
+        var envOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS");
+        if (!string.IsNullOrWhiteSpace(envOrigins))
+        {
+            var parsedEnvOrigins = envOrigins
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            allowedOrigins = allowedOrigins.Concat(parsedEnvOrigins).ToArray();
+        }
+
         policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
