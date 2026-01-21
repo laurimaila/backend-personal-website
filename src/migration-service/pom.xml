@@ -108,37 +108,12 @@
       <plugin>
   <groupId>com.diffplug.spotless</groupId>
   <artifactId>spotless-maven-plugin</artifactId>
-  <version>2.43.0</version>
+  <version>3.1.0</version>
   <configuration>
-    <formats>
-        <format>
-          <includes>
-              <include>*.md</include>
-          </includes>
-          <trimTrailingWhitespace/>
-          <endWithNewline/>
-          <indent>
-              <spaces>true</spaces>
-                    <spacesPerTab>4</spacesPerTab>
-          </indent>
-        </format>
-            <format>
-                <includes>
-                    <include>*.xml</include>
-                </includes>
-                <trimTrailingWhitespace/>
-                <endWithNewline/>
-                <indent>
-                    <spaces>true</spaces>
-                    <spacesPerTab>2</spacesPerTab>
-                </indent>
-            </format>
-    </formats>
     <java>
-    <googleJavaFormat>
-      <style>GOOGLE</style>
-            <reflowLongStrings>true</reflowLongStrings>
-    </googleJavaFormat>
+      <eclipse>
+        <file>${project.basedir}/../../intellij-java-formatter.xml</file>
+      </eclipse>
     </java>
   </configuration>
   </plugin>

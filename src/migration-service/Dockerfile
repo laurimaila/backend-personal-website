@@ -19,7 +19,7 @@ COPY --from=build --chown=185 /usr/src/app/target/quarkus-app/quarkus/ /deployme
 
 USER 185
 
-ENV JAVA_OPTS_APPEND="-Djava.util.logging.manager=org.jboss.logmanager.LogManager -Dquarkus.init-and-exit=true"
+ENV JAVA_OPTS_APPEND="-Djava.util.logging.manager=org.jboss.logmanager.LogManager"
 ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
 
 ENTRYPOINT [ "/opt/jboss/container/java/run/run-java.sh" ]

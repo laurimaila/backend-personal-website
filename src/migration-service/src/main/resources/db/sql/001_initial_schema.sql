@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS messages (
     modified_at TIMESTAMP
 );
 
---changeset lauri:1
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username TEXT NOT NULL UNIQUE,
