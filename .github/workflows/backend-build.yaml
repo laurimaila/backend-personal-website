@@ -3,14 +3,8 @@ run-name: Build and push backend image - ${{ github.event.head_commit.message }}
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main,dev]
     tags: ['v*.*.*']
-    paths:
-      - 'src/backend/**'
-      - 'src/protos/**'
-      - 'tests/backend/**'
-      - 'backend.slnx'
-      - '.github/workflows/backend/**'
 
 permissions:
   packages: write

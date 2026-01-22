@@ -5,9 +5,6 @@ on:
   push:
     branches: [main,dev]
     tags: ['v*.*.*']
-    paths:
-      - 'src/migration-service/**'
-      - '.github/workflows/migration-svc/**'
 
 permissions:
   packages: write

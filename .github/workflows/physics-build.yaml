@@ -3,12 +3,8 @@ run-name: Build and push physics svc image - ${{ github.event.head_commit.messag
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main,dev]
     tags: ['v*.*.*']
-    paths:
-      - 'src/physics-service/**'
-      - 'src/protos/**'
-      - '.github/workflows/physics-svc/**'
 
 permissions:
   packages: write
