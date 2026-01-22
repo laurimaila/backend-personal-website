@@ -5,13 +5,11 @@ on:
   push:
     branches: [main,dev]
     tags: ['v*.*.*']
-    paths:
-      - 'src/migration-service/**'
-      - '.github/workflows/migration-svc/**'
 
 permissions:
-  packages: write
   contents: read
+  packages: write
+  actions: write
 
 jobs:
   lint:
@@ -42,10 +40,13 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/liquibase-svc
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
             type=semver,pattern={{version}}
-            type=sha,prefix=
+
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
+            type=sha,prefix=,enable=${{ github.ref == 'refs/heads/main' }}
+
+            type=raw,value=dev,enable=${{ github.ref == 'refs/heads/dev' }}
+            type=sha,prefix=,suffix=-dev,enable=${{ github.ref == 'refs/heads/dev' }}
 
       - name: Build and push image
         uses: docker/build-push-action@v6
