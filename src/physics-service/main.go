@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net"
+	"net/http"
 	"time"
 
 	pb "laurimaila/physics-service/pb"
@@ -15,12 +16,17 @@ type server struct {
 	pb.UnimplementedPhysicsServiceServer
 }
 
+// Health check handler
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "OK", http.StatusOK)
+}
+
 // Generate and stream 3D trajectory points
 func (s *server) GenerateLorenz(req *pb.LorenzRequest, stream pb.PhysicsService_GenerateLorenzServer) error {
 	log.Printf("Starting Lorenz sim stream. Sigma: %v, Rho: %v, Beta: %v, MaxIterations: %v", req.Sigma, req.Rho, req.Beta, req.MaxIterations)
 
-	// Target 200 Hz send rate
-	sendRate := rate.Limit(200)
+	// Target 180 Hz send rate
+	sendRate := rate.Limit(180)
 	limiter := rate.NewLimiter(sendRate, 1)
 	// Number of simulation steps per frame
 	stepsPerFrame := 1
@@ -66,6 +72,14 @@ func (s *server) GenerateLorenz(req *pb.LorenzRequest, stream pb.PhysicsService_
 }
 
 func main() {
+	go func() {
+		http.HandleFunc("/healthz", healthHandler)
+		log.Printf("Health check server listening on port 8080")
+		if err := http.ListenAndServe(":8080", nil); err != nil {
+			log.Fatalf("Failed to start health check server: %v", err)
+		}
+	}()
+
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
