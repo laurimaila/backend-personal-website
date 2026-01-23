@@ -56,8 +56,8 @@ jobs:
           context: src/migration-service
           platforms: linux/arm64,linux/amd64
           push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=migration-svc
+          cache-to: type=gha,mode=max,scope=migration-svc
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 

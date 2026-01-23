@@ -17,11 +17,29 @@ type server struct {
 }
 
 // Health check handler
-func healthHandler(w http.ResponseWriter, r *http.Request) {
+func healthzHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "OK", http.StatusOK)
 }
 
-// Generate and stream 3D trajectory points
+// Contains the simulation state
+type SimulationState struct {
+	X, Y, Z          float64
+	Sigma, Rho, Beta float64
+	Dt               float64
+}
+
+// Calculates the next state of the sim
+func (s *SimulationState) Advance() {
+	dx := s.Sigma * (s.Y - s.X) * s.Dt
+	dy := (s.X*(s.Rho-s.Z) - s.Y) * s.Dt
+	dz := (s.X*s.Y - s.Beta*s.Z) * s.Dt
+
+	s.X += dx
+	s.Y += dy
+	s.Z += dz
+}
+
+// Simulate and stream 3D points from the Lorenz system
 func (s *server) GenerateLorenz(req *pb.LorenzRequest, stream pb.PhysicsService_GenerateLorenzServer) error {
 	log.Printf("Starting Lorenz sim stream. Sigma: %v, Rho: %v, Beta: %v, MaxIterations: %v", req.Sigma, req.Rho, req.Beta, req.MaxIterations)
 
@@ -31,7 +49,16 @@ func (s *server) GenerateLorenz(req *pb.LorenzRequest, stream pb.PhysicsService_
 	// Number of simulation steps per frame
 	stepsPerFrame := 1
 
-	x, y, z, dt := 0.1, 0.0, 0.0, 0.01
+	// Simulation initial state
+	simState := &SimulationState{
+		X:     0.1,
+		Y:     0.0,
+		Z:     0.0,
+		Sigma: req.Sigma,
+		Rho:   req.Rho,
+		Beta:  req.Beta,
+		Dt:    0.01,
+	}
 
 	maxIter := req.MaxIterations
 	if maxIter == 0 {
@@ -47,36 +74,30 @@ func (s *server) GenerateLorenz(req *pb.LorenzRequest, stream pb.PhysicsService_
 			break
 		}
 
-		// Wait for limiter to allow next send
+		// Wait for rate limiter to allow next send
 		if err := limiter.Wait(stream.Context()); err != nil {
 			return err
 		}
 
 		for j := 0; j < stepsPerFrame; j++ {
-			dx := req.Sigma * (y - x) * dt
-			dy := (x*(req.Rho-z) - y) * dt
-			dz := (x*y - req.Beta*z) * dt
-
-			x += dx
-			y += dy
-			z += dz
+			simState.Advance()
 		}
 
-		if err := stream.Send(&pb.LorenzResponse{X: x, Y: y, Z: z}); err != nil {
-			log.Printf("Streaming Lorenz sim ended: send error: %v", err)
+		if err := stream.Send(&pb.LorenzResponse{X: simState.X, Y: simState.Y, Z: simState.Z}); err != nil {
+			log.Printf("Error streaming simulation: %v", err)
 			return err
 		}
 	}
-	log.Println("Streaming Lorenz sim ended: completed successfully")
+	log.Println("Streaming simulation completed successfully")
 	return nil
 }
 
 func main() {
 	go func() {
-		http.HandleFunc("/healthz", healthHandler)
-		log.Printf("Health check server listening on port 8080")
+		http.HandleFunc("/healthz", healthzHandler)
+		log.Printf("Healthz server listening on port 8080")
 		if err := http.ListenAndServe(":8080", nil); err != nil {
-			log.Fatalf("Failed to start health check server: %v", err)
+			log.Fatalf("Error starting healthz server: %v", err)
 		}
 	}()
 

@@ -9,17 +9,21 @@ COPY src src
 RUN mvn package -DskipTests
 
 # Runtime
-FROM registry.access.redhat.com/ubi9/openjdk-21:1.23
-ENV LANGUAGE='en_US:en'
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
 
-COPY --from=build --chown=185 /usr/src/app/target/quarkus-app/lib/ /deployments/lib/
-COPY --from=build --chown=185 /usr/src/app/target/quarkus-app/*.jar /deployments/
-COPY --from=build --chown=185 /usr/src/app/target/quarkus-app/app/ /deployments/app/
-COPY --from=build --chown=185 /usr/src/app/target/quarkus-app/quarkus/ /deployments/quarkus/
+# Create a non-root user
+RUN addgroup --system --gid 1001 appgroup && \
+    adduser --system --uid 1001 --ingroup appgroup appuser
 
-USER 185
+# Copy built artifacts
+COPY --from=build --chown=appuser:appgroup /usr/src/app/target/quarkus-app/lib/ /app/lib/
+COPY --from=build --chown=appuser:appgroup /usr/src/app/target/quarkus-app/*.jar /app/
+COPY --from=build --chown=appuser:appgroup /usr/src/app/target/quarkus-app/app/ /app/app/
+COPY --from=build --chown=appuser:appgroup /usr/src/app/target/quarkus-app/quarkus/ /app/quarkus/
 
-ENV JAVA_OPTS_APPEND="-Djava.util.logging.manager=org.jboss.logmanager.LogManager"
-ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
+USER appuser
 
-ENTRYPOINT [ "/opt/jboss/container/java/run/run-java.sh" ]
+ENV JAVA_OPTS="-Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+
+ENTRYPOINT ["java", "-jar", "/app/quarkus-run.jar"]
