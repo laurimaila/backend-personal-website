@@ -1,5 +1,4 @@
 name: Test backend
-run-name: Test backend - ${{ github.event.head_commit.message }}
 
 on:
   workflow_call:

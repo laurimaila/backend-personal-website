@@ -1,12 +1,6 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using backend.Models;
+using backend.Data;
+using backend.Data.Entities;
 using backend.Repositories;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace backend.Services;
 

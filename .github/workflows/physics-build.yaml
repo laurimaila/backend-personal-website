@@ -1,5 +1,5 @@
-name: Build and push physics svc image
-run-name: Build and push physics svc image - ${{ github.event.head_commit.message }}
+name: Build image - physics-svc
+run-name: Build image - physics-svc - ${{ github.event.head_commit.message }}
 
 on:
   push:

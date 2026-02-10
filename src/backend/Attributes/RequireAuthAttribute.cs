@@ -1,5 +1,6 @@
-using backend.Models;
-using Microsoft.AspNetCore.Mvc;
+using backend.Data.Entities;
+using backend.Middleware;
+
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace backend.Attributes;
@@ -20,8 +21,7 @@ public class RequireAuthAttribute : ActionFilterAttribute
         var user = context.HttpContext.Items["User"] as User;
         if (user == null)
         {
-            context.Result = new UnauthorizedObjectResult(new { message = "Authentication required" });
-            return;
+            throw new ApiException("UNAUTHORIZED", "Authentication required", System.Net.HttpStatusCode.Unauthorized);
         }
 
         // Add user to context for access in controllers

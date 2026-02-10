@@ -1,16 +1,19 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using backend.Models;
+
+using backend.Data.Entities;
+using backend.Middleware;
 using backend.Repositories;
+
 using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Services;
 
 public interface IAuthService
 {
-    Task<(bool Success, string Token, User? User)> SignInAsync(string username, string password);
-    Task<(bool Success, User? User, string[] Errors)> RegisterAsync(string username, string password);
+    Task<(string Token, User User)> SignInAsync(string username, string password);
+    Task<User> RegisterAsync(string username, string password);
     string GenerateJwtToken(User user);
     Task<User?> ValidateTokenAsync(string token);
 }
@@ -19,31 +22,25 @@ public class AuthService(
     IUserRepository userRepository,
     ILogger<AuthService> logger) : IAuthService
 {
-    public async Task<(bool Success, string Token, User? User)> SignInAsync(string username, string password)
+    public async Task<(string Token, User User)> SignInAsync(string username, string password)
     {
         logger.LogInformation("Sign-in attempt for username: {Username}", username);
 
         var user = await userRepository.GetUserByUsernameAsync(username);
-        if (user == null)
+        if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
-            logger.LogWarning("Sign-in failed: User not found - {Username}", username);
-            return (false, string.Empty, null);
-        }
-
-        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
-        {
-            logger.LogWarning("Sign-in failed: Invalid password for user - {Username}", username);
-            return (false, string.Empty, null);
+            logger.LogWarning("Sign-in failed for username: {Username}", username);
+            throw new ApiException("INVALID_CREDENTIALS", "Invalid username or password", System.Net.HttpStatusCode.Unauthorized);
         }
 
         await userRepository.UpdateLastLoginAsync(user.Id);
         var token = GenerateJwtToken(user);
 
         logger.LogInformation("Successful sign-in for user: {Username}", username);
-        return (true, token, user);
+        return (token, user);
     }
 
-    public async Task<(bool Success, User? User, string[] Errors)> RegisterAsync(string username, string password)
+    public async Task<User> RegisterAsync(string username, string password)
     {
         logger.LogInformation("Registration attempt for username: {Username}", username);
 
@@ -67,7 +64,7 @@ public class AuthService(
         if (errors.Any())
         {
             logger.LogWarning("Registration failed for {Username}: {Errors}", username, string.Join(", ", errors));
-            return (false, null, errors.ToArray());
+            throw new ApiException("REGISTRATION_FAILED", "Registration failed", errors: errors.ToArray());
         }
 
         var user = new User
@@ -79,7 +76,7 @@ public class AuthService(
         var createdUser = await userRepository.CreateUserAsync(user);
 
         logger.LogInformation("Successful registration for user: {Username}", username);
-        return (true, createdUser, Array.Empty<string>());
+        return createdUser;
     }
 
     public string GenerateJwtToken(User user)

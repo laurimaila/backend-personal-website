@@ -1,5 +1,5 @@
-name: Build and push migration svc image
-run-name: Build and push migration svc image - ${{ github.event.head_commit.message }}
+name: Build image - migration-svc
+run-name: Build image - migration-svc - ${{ github.event.head_commit.message }}
 
 on:
   push:

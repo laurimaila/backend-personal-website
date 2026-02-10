@@ -1,8 +1,10 @@
-using System.ComponentModel.DataAnnotations;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+
+using backend.Data.Entities;
 using backend.DTOs;
+using backend.Middleware;
 using backend.Models;
 
 namespace backend.Services;
@@ -43,7 +45,7 @@ public class WebSocketService(
 
         Clients.Add(webSocket);
         logger.LogInformation("Authenticated WebSocket client connected: {Username}. Total clients: {Count}",
-        authenticatedUser.Username, Clients.Count);
+            authenticatedUser.Username, Clients.Count);
 
         try
         {
@@ -71,30 +73,37 @@ public class WebSocketService(
                     continue;
                 }
 
-                var (isValid, errors) = validationService.Validate(incomingMessage);
-                if (!isValid)
-                {
-                    await SendToClient(webSocket, WebSocketMessageTypes.Error, new ErrorDto
-                    {
-                        Code = "VALIDATION_ERROR",
-                        Message = string.Join(", ", errors)
-                    });
-                    continue;
-                }
+                validationService.ValidateAndThrow(incomingMessage);
 
                 var savedMessage = await messageService.CreateMessageAsync(incomingMessage, authenticatedUser);
                 await BroadcastMessage(savedMessage);
             }
         }
+        catch (ApiException ex)
+        {
+            logger.LogWarning("API error in WebSocket for user {Username}: {Message}", authenticatedUser.Username,
+                ex.Message);
+            await SendToClient(webSocket, WebSocketMessageTypes.Error, new ErrorDto
+            {
+                Code = ex.Code,
+                Message = ex.Message,
+                Errors = ex.Errors
+            });
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error handling WebSocket connection for user {Username}", authenticatedUser.Username);
+            await SendToClient(webSocket, WebSocketMessageTypes.Error, new ErrorDto
+            {
+                Code = "INTERNAL_SERVER_ERROR",
+                Message = "An unexpected error occurred"
+            });
         }
         finally
         {
             Clients.Remove(webSocket);
             logger.LogInformation("Client disconnected: {Username}. Total clients: {Count}",
-            authenticatedUser.Username, Clients.Count);
+                authenticatedUser.Username, Clients.Count);
         }
     }
 

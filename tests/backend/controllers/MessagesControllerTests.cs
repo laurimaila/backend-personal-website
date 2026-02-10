@@ -1,8 +1,9 @@
 using backend.Controllers;
-using backend.Models;
+using backend.Data.Entities;
 using backend.Services;
+
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+
 using Moq;
 
 namespace Backend.Tests.Controllers;
@@ -10,14 +11,12 @@ namespace Backend.Tests.Controllers;
 public class MessagesControllerTests
 {
     private readonly Mock<IMessageService> _mockMessageService;
-    private readonly Mock<ILogger<MessagesController>> _mockLogger;
     private readonly MessagesController _controller;
 
     public MessagesControllerTests()
     {
         _mockMessageService = new Mock<IMessageService>();
-        _mockLogger = new Mock<ILogger<MessagesController>>();
-        _controller = new MessagesController(_mockMessageService.Object, _mockLogger.Object);
+        _controller = new MessagesController(_mockMessageService.Object);
     }
 
     [Fact]

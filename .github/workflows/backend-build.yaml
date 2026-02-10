@@ -1,5 +1,5 @@
-name: Build and push backend image
-run-name: Build and push backend image - ${{ github.event.head_commit.message }}
+name: Build image - backend
+run-name: Build image - backend - ${{ github.event.head_commit.message }}
 
 on:
   push:

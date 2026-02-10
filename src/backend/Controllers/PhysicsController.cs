@@ -1,6 +1,9 @@
 using System.Text.Json;
+
 using Backend.Protos;
+
 using Grpc.Core;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -32,20 +35,13 @@ public class PhysicsController : ControllerBase
 
         Response.ContentType = "application/x-ndjson";
 
-        try
-        {
-            using var call = _grpcClient.GenerateLorenz(grpcRequest, cancellationToken: cancellationToken);
+        using var call = _grpcClient.GenerateLorenz(grpcRequest, cancellationToken: cancellationToken);
 
-            await foreach (var point in call.ResponseStream.ReadAllAsync(cancellationToken))
-            {
-                var json = JsonSerializer.Serialize(new { x = point.X, y = point.Y, z = point.Z });
-                await Response.WriteAsync(json + "\n", cancellationToken);
-                await Response.Body.FlushAsync(cancellationToken);
-            }
-        }
-        catch (RpcException ex)
+        await foreach (var point in call.ResponseStream.ReadAllAsync(cancellationToken))
         {
-            _logger.LogError(ex, "gRPC error generating lorenz");
+            var json = JsonSerializer.Serialize(new { x = point.X, y = point.Y, z = point.Z });
+            await Response.WriteAsync(json + "\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
         }
     }
 }

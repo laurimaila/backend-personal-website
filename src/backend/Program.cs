@@ -2,7 +2,7 @@ using backend.Extensions;
 using backend.Middleware;
 using backend.Services;
 using backend.Tools;
-using Backend.Protos;
+
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,6 +49,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseExceptionHandlerMiddleware();
 
 try
 {

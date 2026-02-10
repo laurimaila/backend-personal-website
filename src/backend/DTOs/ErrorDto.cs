@@ -4,4 +4,5 @@ public class ErrorDto
 {
     public string Code { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
+    public string[]? Errors { get; set; }
 }

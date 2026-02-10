@@ -1,5 +1,4 @@
 name: Test migration service
-run-name: Test migration service - ${{ github.event.head_commit.message }}
 
 on:
   workflow_call:

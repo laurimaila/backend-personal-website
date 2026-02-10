@@ -1,4 +1,6 @@
+using backend.DTOs;
 using backend.Services;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -18,7 +20,12 @@ public class WebSocketController(IWebSocketService webSocketService)
         }
         else
         {
-            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            Response.StatusCode = StatusCodes.Status400BadRequest;
+            await Response.WriteAsJsonAsync(new ErrorDto
+            {
+                Code = "BAD_REQUEST",
+                Message = "WebSocket connection expected"
+            });
         }
     }
 }

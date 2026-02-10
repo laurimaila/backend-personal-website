@@ -1,8 +1,8 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+using backend.Data.Entities;
+
 using Microsoft.EntityFrameworkCore;
 
-namespace backend.Models;
+namespace backend.Data;
 
 public interface IApplicationContext
 {
@@ -82,44 +82,4 @@ public class ApplicationContext : DbContext, IApplicationContext
                 .IsUnique();
         });
     }
-}
-
-[Table("messages")]
-public class Message
-{
-    [Key][Column("id")] public int Id { get; set; }
-
-    [Required][Column("content")] public string Content { get; set; } = string.Empty;
-
-    [Required]
-    [Column("creator")]
-    [MaxLength(100)]
-    public string Creator { get; set; } = string.Empty;
-
-    [Column("created_at")] public DateTime CreatedAt { get; set; }
-    [Column("modified_at")] public DateTime? ModifiedAt { get; set; }
-}
-
-[Table("users")]
-public class User
-{
-    [Key]
-    [Column("id")]
-    public int Id { get; set; }
-
-    [Required]
-    [Column("username")]
-    [MaxLength(255)]
-    public string Username { get; set; } = string.Empty;
-
-    [Required]
-    [Column("password_hash")]
-    [MaxLength(255)]
-    public string PasswordHash { get; set; } = string.Empty;
-
-    [Column("created_at")]
-    public DateTime CreatedAt { get; set; }
-
-    [Column("last_login")]
-    public DateTime? LastLogin { get; set; }
 }

@@ -1,5 +1,4 @@
 name: Lint migration service
-run-name: Lint migration service - ${{ github.event.head_commit.message }}
 
 on:
   workflow_call:

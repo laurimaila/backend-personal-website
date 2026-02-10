@@ -1,7 +1,9 @@
 using backend.Attributes;
-using backend.DTOs;
+using backend.Data.Entities;
+using backend.Middleware;
 using backend.Models;
 using backend.Services;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
@@ -9,21 +11,13 @@ namespace backend.Controllers;
 [ApiController]
 [Route("api/messages")]
 [RequireAuth]
-public class MessagesController(IMessageService messageService, ILogger<MessagesController> logger) : ControllerBase
+public class MessagesController(IMessageService messageService) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Message>>> GetMessages([FromQuery] int limit = 50)
     {
-        try
-        {
-            var messages = await messageService.GetRecentMessagesAsync(limit);
-            return Ok(messages);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred while fetching messages");
-            return StatusCode(500, "An error occurred while fetching messages");
-        }
+        var messages = await messageService.GetRecentMessagesAsync(limit);
+        return Ok(messages);
     }
 
     [HttpGet("paged")]
@@ -31,36 +25,20 @@ public class MessagesController(IMessageService messageService, ILogger<Messages
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        try
-        {
-            var result = await messageService.GetMessagesPagedAsync(page, pageSize);
-            return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred while fetching paged messages");
-            return StatusCode(500, "An error occurred while fetching messages");
-        }
+        var result = await messageService.GetMessagesPagedAsync(page, pageSize);
+        return Ok(result);
     }
 
     [HttpGet("tukaani")]
     [AllowAnonymous]
     public async Task<ActionResult<bool>> TestDeleteAllMessages()
     {
-        try
+        var result = await messageService.DeleteAllMessagesAsync();
+        if (result)
         {
-            var result = await messageService.DeleteAllMessagesAsync();
-            if (result)
-            {
-                return Ok(new { message = "All messages successfully deleted" });
-            }
+            return Ok(new { message = "All messages successfully deleted" });
+        }
 
-            return NotFound(new { message = "No messages to delete" });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error occurred while deleting all messages");
-            return StatusCode(500, new { message = "An error occurred while deleting messages" });
-        }
+        throw new ApiException("MESSAGES_NOT_FOUND", "No messages to delete", System.Net.HttpStatusCode.NotFound);
     }
 }

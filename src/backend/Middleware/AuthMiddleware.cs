@@ -1,4 +1,3 @@
-using backend.Models;
 using backend.Services;
 
 namespace backend.Middleware;
