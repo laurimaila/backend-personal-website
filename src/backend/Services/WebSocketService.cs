@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -26,7 +27,7 @@ public class WebSocketService(
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    private static readonly List<WebSocket> Clients = [];
+    private static readonly ConcurrentDictionary<WebSocket, byte> Clients = new();
 
     public async Task HandleWebSocketConnection(WebSocket webSocket, HttpContext httpContext)
     {
@@ -43,7 +44,7 @@ public class WebSocketService(
             return;
         }
 
-        Clients.Add(webSocket);
+        Clients.TryAdd(webSocket, 0);
         logger.LogInformation("Authenticated WebSocket client connected: {Username}. Total clients: {Count}",
             authenticatedUser.Username, Clients.Count);
 
@@ -90,6 +91,11 @@ public class WebSocketService(
                 Errors = ex.Errors
             });
         }
+        catch (WebSocketException ex)
+        {
+            logger.LogInformation("WebSocket connection closed for user {Username}: {Message}",
+                authenticatedUser.Username, ex.Message);
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error handling WebSocket connection for user {Username}", authenticatedUser.Username);
@@ -101,7 +107,7 @@ public class WebSocketService(
         }
         finally
         {
-            Clients.Remove(webSocket);
+            Clients.TryRemove(webSocket, out _);
             logger.LogInformation("Client disconnected: {Username}. Total clients: {Count}",
                 authenticatedUser.Username, Clients.Count);
         }
@@ -140,7 +146,7 @@ public class WebSocketService(
     {
         var deadSockets = new List<WebSocket>();
 
-        foreach (var client in Clients)
+        foreach (var client in Clients.Keys)
         {
             try
             {
@@ -155,7 +161,7 @@ public class WebSocketService(
         // Clean up dead connections
         foreach (var socket in deadSockets)
         {
-            Clients.Remove(socket);
+            Clients.TryRemove(socket, out _);
         }
     }
 }

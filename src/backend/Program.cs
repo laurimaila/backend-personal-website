@@ -1,9 +1,11 @@
+using backend.Common;
+using backend.Configuration;
 using backend.Extensions;
 using backend.Middleware;
 using backend.Services;
-using backend.Tools;
 
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,16 +19,22 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        var allowedOrigins = builder.Configuration
+        var configOrigins = builder.Configuration
             .GetSection("CorsOrigins")
             .Get<string[]>() ?? Array.Empty<string>();
 
-        var envOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS");
-        if (!string.IsNullOrWhiteSpace(envOrigins))
+        // From environment through ApplicationSettings
+        var appSettings = builder.Configuration
+            .GetSection("ApplicationSettings")
+            .Get<ApplicationSettings>();
+
+        var allowedOrigins = configOrigins;
+
+        if (appSettings != null && !string.IsNullOrWhiteSpace(appSettings.CorsOrigins))
         {
-            var parsedEnvOrigins = envOrigins
+            var parsedAppOrigins = appSettings.CorsOrigins
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            allowedOrigins = allowedOrigins.Concat(parsedEnvOrigins).ToArray();
+            allowedOrigins = configOrigins.Concat(parsedAppOrigins).ToArray();
         }
 
         policy.WithOrigins(allowedOrigins)
@@ -81,16 +89,15 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
     {
-        var result = new
-        {
-            Status = report.Status.ToString(),
-            Environment = app.Environment.EnvironmentName,
-            // Return BACKEND_VERSION env var if set
-            Version = Environment.GetEnvironmentVariable("BACKEND_VERSION") ?? "unknown",
-            Timestamp = DateTime.UtcNow,
-        };
+        var settings = context.RequestServices.GetRequiredService<IOptions<ApplicationSettings>>().Value;
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(result);
+        await context.Response.WriteAsJsonAsync(new
+        {
+            status = report.Status.ToString().ToLowerInvariant(),
+            environment = app.Environment.EnvironmentName,
+            version = settings.Version,
+            timestamp = DateTime.UtcNow
+        });
     }
 });
 

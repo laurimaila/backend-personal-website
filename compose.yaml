@@ -13,14 +13,14 @@
     environment:
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_ENVIRONMENT=Development
-      - CONNECTION_STRING=Host=db;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_URL=jdbc:postgresql://db:5432/${POSTGRES_DB}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_EXPIRY_HOURS=${JWT_EXPIRY_HOURS}
-      - GO_PHYS_SVC_URL=${GO_PHYS_SVC_URL}
+      - PHYSICS_SVC_URL=${PHYSICS_SVC_URL}
     depends_on:
       db:
         condition: service_healthy

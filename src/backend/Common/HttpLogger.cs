@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.HttpLogging;
 
-namespace backend.Tools;
+namespace backend.Common;
 
 public static class HttpLogger
 {

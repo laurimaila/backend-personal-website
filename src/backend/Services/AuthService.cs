@@ -2,10 +2,12 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
+using backend.Configuration;
 using backend.Data.Entities;
 using backend.Middleware;
 using backend.Repositories;
 
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace backend.Services;
@@ -20,6 +22,7 @@ public interface IAuthService
 
 public class AuthService(
     IUserRepository userRepository,
+    IOptions<ApplicationSettings> settings,
     ILogger<AuthService> logger) : IAuthService
 {
     public async Task<(string Token, User User)> SignInAsync(string username, string password)
@@ -81,11 +84,9 @@ public class AuthService(
 
     public string GenerateJwtToken(User user)
     {
-        var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
-            ?? throw new InvalidOperationException("JWT_SECRET_KEY environment variable not configured");
-
-
-        var expiryHours = int.Parse(Environment.GetEnvironmentVariable("JWT_EXPIRY_HOURS") ?? "24");
+        var appSettings = settings.Value;
+        var secretKey = appSettings.JwtSecretKey;
+        var expiryHours = appSettings.JwtExpiryHours;
 
         logger.LogInformation("Creating JWT token for user {UserId} with expiry {Hours} hours", user.Id, expiryHours);
 
@@ -118,8 +119,8 @@ public class AuthService(
     {
         try
         {
-            var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
-                ?? throw new InvalidOperationException("JWT_SECRET_KEY environment variable not configured");
+            var appSettings = settings.Value;
+            var secretKey = appSettings.JwtSecretKey;
 
             var key = Encoding.ASCII.GetBytes(secretKey);
             var tokenHandler = new JwtSecurityTokenHandler();
