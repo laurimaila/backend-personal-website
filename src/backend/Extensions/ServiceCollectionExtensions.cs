@@ -28,10 +28,24 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<ApplicationContext>((sp, options) =>
         {
             var settings = sp.GetRequiredService<IOptions<ApplicationSettings>>().Value;
-            // Use CONNECTION_STRING if provided, otherwise construct from individual settings
-            var connectionString = !string.IsNullOrWhiteSpace(settings.ConnectionString)
-                ? settings.ConnectionString
-                : $"Host={settings.PostgresHost};Database={settings.PostgresDb};Username={settings.PostgresUser};Password={settings.PostgresPassword}";
+
+            string connectionString;
+            if (!string.IsNullOrWhiteSpace(settings.ConnectionString))
+            {
+                connectionString = settings.ConnectionString;
+            }
+            else
+            {
+                var builder = new Npgsql.NpgsqlConnectionStringBuilder
+                {
+                    Host = settings.PostgresHost,
+                    Database = settings.PostgresDb,
+                    Username = settings.PostgresUser,
+                    Password = settings.PostgresPassword,
+                    Port = 5432
+                };
+                connectionString = builder.ConnectionString;
+            }
 
             options.UseNpgsql(connectionString);
         });

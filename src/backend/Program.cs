@@ -23,10 +23,7 @@ builder.Services.AddCors(options =>
             .GetSection("CorsOrigins")
             .Get<string[]>() ?? Array.Empty<string>();
 
-        // From environment through ApplicationSettings
-        var appSettings = builder.Configuration
-            .GetSection("ApplicationSettings")
-            .Get<ApplicationSettings>();
+        var appSettings = builder.Configuration.Get<ApplicationSettings>();
 
         var allowedOrigins = configOrigins;
 

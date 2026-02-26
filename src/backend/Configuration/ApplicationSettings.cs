@@ -16,6 +16,7 @@ public class ApplicationSettings
     [ConfigurationKeyName("POSTGRES_DB")]
     public string PostgresDb { get; set; } = string.Empty;
 
+    [Required]
     [ConfigurationKeyName("POSTGRES_HOST")]
     public string PostgresHost { get; set; } = string.Empty;
 
