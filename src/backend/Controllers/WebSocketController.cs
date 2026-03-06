@@ -8,7 +8,7 @@ namespace backend.Controllers;
 [Route("api/ws")]
 [ApiController]
 public class WebSocketController(IWebSocketService webSocketService)
-    : ControllerBase
+    : ApiControllerBase
 {
     [HttpGet]
     public async Task Get()

@@ -1,11 +1,19 @@
 using backend.Services;
 
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Policy;
+
 namespace backend.Middleware;
 
 public class AuthenticationMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<AuthenticationMiddleware> _logger;
+
+    private static readonly string[] _skipAuthPaths =
+    [
+        "/api/auth/",
+    ];
 
     public AuthenticationMiddleware(RequestDelegate next, ILogger<AuthenticationMiddleware> logger)
     {
@@ -16,34 +24,52 @@ public class AuthenticationMiddleware
     public async Task InvokeAsync(HttpContext context, IAuthService authService)
     {
         // Skip authentication for certain paths
-        var path = context.Request.Path.Value?.ToLower();
-        var skipAuth = path?.StartsWith("/api/auth/login") == true ||
-                   path?.StartsWith("/api/auth/register") == true ||
-                   path?.StartsWith("/api/auth/logout") == true ||
-                   path?.StartsWith("/api/auth/check") == true ||
-                   path?.StartsWith("/health") == true ||
-                   path?.StartsWith("/swagger") == true;
+        var path = context.Request.Path.Value;
+        var skipAuth = ShouldSkipAuth(path);
 
         if (!skipAuth && context.Request.Cookies.TryGetValue("auth_token", out var token) && !string.IsNullOrEmpty(token))
         {
-            try
+            var principal = authService.ValidateToken(token);
+            if (principal != null)
             {
-                var user = await authService.ValidateTokenAsync(token);
-                if (user != null)
-                {
-                    context.Items["User"] = user;
-                    context.Items["AuthenticatedUser"] = user;
-                    _logger.LogDebug("Authenticated user {Username} for request {Path}", user.Username, path);
-                }
+                context.User = principal;
+                _logger.LogDebug("Authenticated user {Username} for request {Path}", principal.Identity?.Name, path);
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogWarning(ex, "Token validation failed for request {Path}", path);
                 context.Response.Cookies.Delete("auth_token");
             }
         }
 
         await _next(context);
+    }
+
+    private static bool ShouldSkipAuth(string? path) =>
+        path is not null &&
+        _skipAuthPaths.Any(p => path.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+}
+
+public class ApiExceptionAuthorizationHandler : IAuthorizationMiddlewareResultHandler
+{
+    private readonly AuthorizationMiddlewareResultHandler _defaultHandler = new();
+
+    public async Task HandleAsync(
+        RequestDelegate next,
+        HttpContext context,
+        AuthorizationPolicy policy,
+        PolicyAuthorizationResult result)
+    {
+        if (result.Forbidden)
+        {
+            throw new ApiException("FORBIDDEN", "You do not have permission to access this resource", System.Net.HttpStatusCode.Forbidden);
+        }
+
+        if (result.Challenged)
+        {
+            throw new ApiException("UNAUTHORIZED", "Authentication required", System.Net.HttpStatusCode.Unauthorized);
+        }
+
+        await _defaultHandler.HandleAsync(next, context, policy, result);
     }
 }
 

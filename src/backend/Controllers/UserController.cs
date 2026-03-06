@@ -1,15 +1,25 @@
-using backend.Attributes;
+using System.Security.Claims;
+
+using backend.Configuration;
 using backend.Data.Entities;
 using backend.DTOs;
+using backend.Repositories;
 using backend.Services;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class UserController(IAuthService authService, IValidationService validationService, ILogger<UserController> logger) : ControllerBase
+public class UserController(
+    IAuthService authService,
+    IValidationService validationService,
+    IUserRepository userRepository,
+    IOptions<ApplicationSettings> settings,
+    ILogger<UserController> logger) : ApiControllerBase
 {
     [HttpPost("register")]
     public async Task<ActionResult> Register([FromBody] RegisterDto registerDto)
@@ -28,13 +38,13 @@ public class UserController(IAuthService authService, IValidationService validat
 
         var (token, user) = await authService.SignInAsync(loginDto.Username, loginDto.Password);
 
-        // Set HTTP-only cookie
+        // Set HTTP-only cookie synced with JWT expiry
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
             Secure = !HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment(),
             SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.AddHours(24),
+            Expires = DateTime.UtcNow.AddHours(settings.Value.JwtExpiryHours),
             Path = "/"
         };
 
@@ -61,14 +71,23 @@ public class UserController(IAuthService authService, IValidationService validat
     }
 
     [HttpGet("whoami")]
-    [RequireAuth]
-    public ActionResult WhoAmI()
+    [Authorize]
+    public async Task<ActionResult> WhoAmI()
     {
-        var user = HttpContext.Items["AuthenticatedUser"] as User;
+        if (CurrentUserId == 0)
+        {
+            return Unauthorized();
+        }
+
+        var user = await userRepository.GetUserByIdAsync(CurrentUserId);
+        if (user == null)
+        {
+            return NotFound();
+        }
 
         return Ok(new
         {
-            user!.Id,
+            user.Id,
             user.Username,
             user.CreatedAt,
             user.LastLogin

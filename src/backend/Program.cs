@@ -4,12 +4,15 @@ using backend.Extensions;
 using backend.Middleware;
 using backend.Services;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, ApiExceptionAuthorizationHandler>();
 builder.Services.AddHealthChecks();
 
 builder.Services.AddScoped<IValidationService, ValidationService>();
@@ -76,9 +79,10 @@ app.UseStaticFiles();
 
 app.UseWebSockets();
 
-app.UseAuthenticationMiddleware();
-
 app.UseCors();
+
+app.UseAuthenticationMiddleware();
+app.UseAuthorization();
 
 app.MapControllers();
 

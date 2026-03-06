@@ -10,7 +10,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/physics")]
-public class PhysicsController : ControllerBase
+public class PhysicsController : ApiControllerBase
 {
     private readonly PhysicsService.PhysicsServiceClient _grpcClient;
     private readonly ILogger<PhysicsController> _logger;

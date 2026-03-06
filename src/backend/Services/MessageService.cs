@@ -10,7 +10,7 @@ public interface IMessageService
     Task<IEnumerable<Message>> GetRecentMessagesAsync(int limit);
     Task<PagedResult<Message>> GetMessagesPagedAsync(int page, int pageSize);
 
-    Task<Message> CreateMessageAsync(CreateMessageDto createMessageDto, User authenticatedUser);
+    Task<Message> CreateMessageAsync(CreateMessageDto createMessageDto, string creator);
     Task<bool> DeleteAllMessagesAsync();
 }
 
@@ -50,18 +50,18 @@ public class MessageService(IMessageRepository repository, ILogger<MessageServic
         }
     }
 
-    public async Task<Message> CreateMessageAsync(CreateMessageDto createMessageDto, User authenticatedUser)
+    public async Task<Message> CreateMessageAsync(CreateMessageDto createMessageDto, string creator)
     {
         try
         {
             var message = new Message
             {
                 Content = createMessageDto.content,
-                Creator = authenticatedUser.Username,
+                Creator = creator,
                 CreatedAt = DateTime.UtcNow
             };
 
-            logger.LogInformation("Creating message for user {Username}", authenticatedUser.Username);
+            logger.LogInformation("Creating message for user {Username}", creator);
             return await repository.CreateMessageAsync(message);
         }
         catch (Exception ex)
