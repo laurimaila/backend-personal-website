@@ -4,12 +4,15 @@ using backend.Extensions;
 using backend.Middleware;
 using backend.Services;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, ApiExceptionAuthorizationHandler>();
 builder.Services.AddHealthChecks();
 
 builder.Services.AddScoped<IValidationService, ValidationService>();
@@ -55,8 +58,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseExceptionHandlerMiddleware();
-
 try
 {
     using var scope = app.Services.CreateScope();
@@ -69,20 +70,22 @@ catch (Exception ex)
     logger.LogError(ex, "Failed to initialize database");
 }
 
-app.UseHttpLogging();
+app.UseExceptionHandlerMiddleware();
 
+app.UseHttpLogging();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.UseWebSockets();
+app.UseCors();
 
 app.UseAuthenticationMiddleware();
+app.UseAuthorization();
 
-app.UseCors();
+app.UseWebSockets();
 
 app.MapControllers();
 
-app.MapHealthChecks("/health", new HealthCheckOptions
+app.MapHealthChecks("/api/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
     {

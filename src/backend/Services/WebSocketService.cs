@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 
@@ -31,10 +32,11 @@ public class WebSocketService(
 
     public async Task HandleWebSocketConnection(WebSocket webSocket, HttpContext httpContext)
     {
-        // Get authenticated user from the HTTP context set by middleware
-        var authenticatedUser = httpContext.Items["User"] as User;
+        // Get authenticated user from the HTTP context User (ClaimsPrincipal)
+        var user = httpContext.User;
+        var username = user.Identity?.Name;
 
-        if (authenticatedUser == null)
+        if (user.Identity?.IsAuthenticated != true || string.IsNullOrEmpty(username))
         {
             logger.LogWarning("Unauthorized WebSocket connection attempt");
             await webSocket.CloseAsync(
@@ -46,7 +48,7 @@ public class WebSocketService(
 
         Clients.TryAdd(webSocket, 0);
         logger.LogInformation("Authenticated WebSocket client connected: {Username}. Total clients: {Count}",
-            authenticatedUser.Username, Clients.Count);
+            username, Clients.Count);
 
         try
         {
@@ -76,13 +78,13 @@ public class WebSocketService(
 
                 validationService.ValidateAndThrow(incomingMessage);
 
-                var savedMessage = await messageService.CreateMessageAsync(incomingMessage, authenticatedUser);
+                var savedMessage = await messageService.CreateMessageAsync(incomingMessage, username);
                 await BroadcastMessage(savedMessage);
             }
         }
         catch (ApiException ex)
         {
-            logger.LogWarning("API error in WebSocket for user {Username}: {Message}", authenticatedUser.Username,
+            logger.LogWarning("API error in WebSocket for user {Username}: {Message}", username,
                 ex.Message);
             await SendToClient(webSocket, WebSocketMessageTypes.Error, new ErrorDto
             {
@@ -94,11 +96,11 @@ public class WebSocketService(
         catch (WebSocketException ex)
         {
             logger.LogInformation("WebSocket connection closed for user {Username}: {Message}",
-                authenticatedUser.Username, ex.Message);
+                username, ex.Message);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error handling WebSocket connection for user {Username}", authenticatedUser.Username);
+            logger.LogError(ex, "Error handling WebSocket connection for user {Username}", username);
             await SendToClient(webSocket, WebSocketMessageTypes.Error, new ErrorDto
             {
                 Code = "INTERNAL_SERVER_ERROR",
@@ -109,7 +111,7 @@ public class WebSocketService(
         {
             Clients.TryRemove(webSocket, out _);
             logger.LogInformation("Client disconnected: {Username}. Total clients: {Count}",
-                authenticatedUser.Username, Clients.Count);
+                username, Clients.Count);
         }
     }
 

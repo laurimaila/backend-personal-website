@@ -1,17 +1,17 @@
-using backend.Attributes;
 using backend.Data.Entities;
 using backend.Middleware;
 using backend.Models;
 using backend.Services;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/messages")]
-[RequireAuth]
-public class MessagesController(IMessageService messageService) : ControllerBase
+[Authorize]
+public class MessagesController(IMessageService messageService) : ApiControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Message>>> GetMessages([FromQuery] int limit = 50)
