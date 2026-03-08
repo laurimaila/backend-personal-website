@@ -17,7 +17,7 @@ public interface IAuthService
     Task<(string Token, User User)> SignInAsync(string username, string password);
     Task<User> RegisterAsync(string username, string password);
     string GenerateJwtToken(User user);
-    Task<User?> ValidateTokenAsync(string token);
+    ClaimsPrincipal? ValidateToken(string token);
 }
 
 public class AuthService(
@@ -115,7 +115,7 @@ public class AuthService(
         return tokenString;
     }
 
-    public async Task<User?> ValidateTokenAsync(string token)
+    public ClaimsPrincipal? ValidateToken(string token)
     {
         try
         {
@@ -125,33 +125,16 @@ public class AuthService(
             var key = Encoding.ASCII.GetBytes(secretKey);
             var tokenHandler = new JwtSecurityTokenHandler();
 
-            tokenHandler.ValidateToken(token, new TokenValidationParameters
+            var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ClockSkew = TimeSpan.Zero
-            }, out SecurityToken validatedToken);
+            }, out _);
 
-            var jwtToken = (JwtSecurityToken)validatedToken;
-
-            var userIdClaim = jwtToken.Claims.FirstOrDefault(x => x.Type == "nameid")
-                          ?? jwtToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
-
-            if (userIdClaim == null)
-            {
-                logger.LogWarning("Token validation failed: Missing user ID claim");
-                return null;
-            }
-
-            if (!int.TryParse(userIdClaim.Value, out var userId))
-            {
-                logger.LogWarning("Token validation failed: Invalid user ID format");
-                return null;
-            }
-
-            return await userRepository.GetUserByIdAsync(userId);
+            return principal;
         }
         catch (Exception ex)
         {

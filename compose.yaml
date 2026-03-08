@@ -20,6 +20,12 @@
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - JWT_EXPIRY_HOURS=${JWT_EXPIRY_HOURS}
       - PHYSICS_SVC_URL=${PHYSICS_SVC_URL}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     depends_on:
       db:
         condition: service_healthy
