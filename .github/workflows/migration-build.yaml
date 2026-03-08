@@ -15,13 +15,11 @@ permissions:
   actions: write
 
 jobs:
-  lint:
-    uses: ./.github/workflows/migration-lint.yaml
-  test:
-    uses: ./.github/workflows/migration-test.yaml
+  lint-test:
+    uses: ./.github/workflows/migration-lint-test.yaml
 
   build:
-    needs: [lint, test]
+    needs: [lint-test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -41,7 +39,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/liquibase-svc
+          images: ghcr.io/laurimaila/liquibase-svc
           tags: |
             type=match,pattern=migration-v(.*),group=1
 

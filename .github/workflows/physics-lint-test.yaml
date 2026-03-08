@@ -1,10 +1,10 @@
-name: Lint physics service
+name: Lint and test physics-svc
 
 on:
   workflow_call:
 
 jobs:
-  lint:
+  lint-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,3 +21,7 @@ jobs:
           version: latest
           working-directory: src/physics-service
           args: --timeout=4m
+
+      - name: Test
+        working-directory: src/physics-service
+        run: go test -v ./...

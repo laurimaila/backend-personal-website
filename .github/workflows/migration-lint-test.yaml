@@ -1,10 +1,10 @@
-name: Lint migration service
+name: Lint and test migration-svc
 
 on:
   workflow_call:
 
 jobs:
-  lint:
+  lint-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -22,3 +22,6 @@ jobs:
 
       - name: Format
         run: mvn spotless:check --file src/migration-service/pom.xml
+
+      - name: Test
+        run: mvn -B test --file src/migration-service/pom.xml

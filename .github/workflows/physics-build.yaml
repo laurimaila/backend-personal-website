@@ -16,13 +16,11 @@ permissions:
   actions: write
 
 jobs:
-  lint:
-    uses: ./.github/workflows/physics-lint.yaml
-  test:
-    uses: ./.github/workflows/physics-test.yaml
+  lint-test:
+    uses: ./.github/workflows/physics-lint-test.yaml
 
   build:
-    needs: [lint, test]
+    needs: [lint-test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +41,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/physics-svc
+          images: ghcr.io/laurimaila/physics-svc
           tags: |
             type=match,pattern=physics-v(.*),group=1
 

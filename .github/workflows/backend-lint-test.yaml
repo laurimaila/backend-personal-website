@@ -1,10 +1,10 @@
-name: Test backend
+name: Lint and test backend
 
 on:
   workflow_call:
 
 jobs:
-  test:
+  lint-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,6 +13,9 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10
+
+      - name: Lint
+        run: dotnet format --verify-no-changes --verbosity diagnostic backend.slnx
 
       - name: Run tests
         run: dotnet test backend.slnx

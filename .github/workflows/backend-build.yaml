@@ -19,13 +19,11 @@ permissions:
   actions: write
 
 jobs:
-  lint:
-    uses: ./.github/workflows/backend-lint.yaml
-  test:
-    uses: ./.github/workflows/backend-test.yaml
+  lint-test:
+    uses: ./.github/workflows/backend-lint-test.yaml
 
   build:
-    needs: [lint, test]
+    needs: [lint-test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
