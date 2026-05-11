@@ -2,6 +2,8 @@ using backend.Data;
 using backend.Data.Entities;
 using backend.Repositories;
 
+using Microsoft.EntityFrameworkCore;
+
 namespace backend.Services;
 
 public class DatabaseInitService
@@ -25,6 +27,8 @@ public class DatabaseInitService
         try
         {
             _logger.LogInformation("Starting database initialization");
+
+            await _dbContext.Database.MigrateAsync();
 
             // Add a visitor user by default
             await CreateDefaultVisitorUserAsync();

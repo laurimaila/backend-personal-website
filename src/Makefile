@@ -1,6 +1,18 @@
 export PATH := $(shell go env GOPATH)/bin:$(PATH)
 
-.PHONY: proto
+.PHONY: proto migration migration-remove migration-list
+
+# Usage: make migration name=AddSomeTable
+migration:
+	dotnet ef migrations add $(name) --project backend/backend.csproj --output-dir Data/Migrations
+
+# Usage: make migration-remove
+migration-remove:
+	dotnet ef migrations remove --project backend/backend.csproj
+
+# Usage: make migration-list
+migration-list:
+	dotnet ef migrations list --project backend/backend.csproj
 
 proto:
 	@echo "Generating Go code..."
