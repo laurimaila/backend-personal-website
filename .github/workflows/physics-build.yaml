@@ -2,6 +2,7 @@ name: Build image - physics-svc
 run-name: Build image - physics-svc - ${{ github.event.head_commit.message }}
 
 on:
+  create:
   push:
     branches: [main,dev]
     paths:
@@ -17,6 +18,7 @@ permissions:
 
 jobs:
   lint-test:
+    if: github.event_name == 'push' || github.ref == 'refs/heads/dev'
     uses: ./.github/workflows/physics-lint-test.yaml
 
   build:
