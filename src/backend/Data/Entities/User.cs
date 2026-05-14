@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace backend.Data.Entities;
 
@@ -18,6 +19,7 @@ public class User
     [Required]
     [Column("password_hash")]
     [MaxLength(255)]
+    [JsonIgnore]
     public string PasswordHash { get; set; } = string.Empty;
 
     [Column("created_at")]
@@ -25,4 +27,11 @@ public class User
 
     [Column("last_login")]
     public DateTime? LastLogin { get; set; }
+
+    [Column("is_admin")]
+    public bool IsAdmin { get; set; }
+
+    [Column("name_color")]
+    [MaxLength(7)]
+    public string NameColor { get; set; } = "#ffffff";
 }

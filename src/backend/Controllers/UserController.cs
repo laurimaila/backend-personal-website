@@ -1,8 +1,6 @@
-using System.Security.Claims;
-
 using backend.Configuration;
-using backend.Data.Entities;
 using backend.DTOs;
+using backend.Middleware;
 using backend.Repositories;
 using backend.Services;
 
@@ -90,7 +88,26 @@ public class UserController(
             user.Id,
             user.Username,
             user.CreatedAt,
-            user.LastLogin
+            user.LastLogin,
+            user.NameColor
         });
+    }
+
+    [HttpPatch("me/color")]
+    [Authorize]
+    public async Task<ActionResult> UpdateNameColor([FromBody] UpdateNameColorDto dto)
+    {
+        validationService.ValidateAndThrow(dto);
+
+        var user = await userRepository.GetUserByIdAsync(CurrentUserId);
+        if (user == null)
+        {
+            throw new ApiException("USER_NOT_FOUND", "User not found", System.Net.HttpStatusCode.NotFound);
+        }
+
+        user.NameColor = dto.Color;
+        await userRepository.UpdateUserAsync(user);
+
+        return Ok(new { user.Id, user.NameColor });
     }
 }

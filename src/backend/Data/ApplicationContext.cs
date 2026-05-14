@@ -8,6 +8,7 @@ public interface IApplicationContext
 {
     DbSet<Message> Messages { get; }
     DbSet<User> Users { get; }
+    DbSet<MessageReaction> MessageReactions { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 
@@ -20,65 +21,49 @@ public class ApplicationContext : DbContext, IApplicationContext
 
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<MessageReaction> MessageReactions => Set<MessageReaction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Message>(entity =>
         {
-            entity.ToTable("messages");
-
-            entity.HasKey(e => e.Id);
-
-            entity.Property(e => e.Id)
-                .HasColumnName("id")
-                .UseIdentityColumn();
-
-            entity.Property(e => e.Content)
-                .IsRequired()
-                .HasColumnName("content");
-
-            entity.Property(e => e.Creator)
-                .IsRequired()
-                .HasColumnName("creator_name")
-                .HasMaxLength(100);
-
             entity.Property(e => e.CreatedAt)
-                .HasColumnName("created_at")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            entity.Property(e => e.ModifiedAt)
-                .HasColumnName("modified_at");
+            entity.HasOne(e => e.CreatorUser)
+                .WithMany()
+                .HasForeignKey(e => e.CreatorId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.ToTable("users");
-
-            entity.HasKey(e => e.Id);
-
-            entity.Property(e => e.Id)
-                .HasColumnName("id")
-                .UseIdentityColumn();
-
-            entity.Property(e => e.Username)
-                .IsRequired()
-                .HasColumnName("username")
-                .HasMaxLength(255);
-
-            entity.Property(e => e.PasswordHash)
-                .IsRequired()
-                .HasColumnName("password_hash")
-                .HasMaxLength(255);
-
             entity.Property(e => e.CreatedAt)
-                .HasColumnName("created_at")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            entity.Property(e => e.LastLogin)
-                .HasColumnName("last_login");
+            entity.Property(e => e.IsAdmin)
+                .HasDefaultValue(false);
 
-            // Unique constraint for username
+            entity.Property(e => e.NameColor)
+                .HasDefaultValue("#ffffff");
+
             entity.HasIndex(e => e.Username)
+                .IsUnique();
+        });
+
+        modelBuilder.Entity<MessageReaction>(entity =>
+        {
+            entity.HasOne(e => e.Message)
+                .WithMany(m => m.Reactions)
+                .HasForeignKey(e => e.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => new { e.MessageId, e.UserId })
                 .IsUnique();
         });
     }

@@ -1,5 +1,5 @@
 using backend.Controllers;
-using backend.Data.Entities;
+using backend.DTOs;
 using backend.Services;
 
 using Microsoft.AspNetCore.Mvc;
@@ -16,18 +16,21 @@ public class MessagesControllerTests
     public MessagesControllerTests()
     {
         _mockMessageService = new Mock<IMessageService>();
-        _controller = new MessagesController(_mockMessageService.Object);
+        var mockWebSocketService = new Mock<IWebSocketService>();
+        var mockValidationService = new Mock<IValidationService>();
+        _controller = new MessagesController(_mockMessageService.Object, mockWebSocketService.Object, mockValidationService.Object);
     }
 
     [Fact]
     public async Task GetMessages_ReturnsOkResult_WithListOfMessages()
     {
         // Arrange
-        var expectedMessages = new List<Message>
+        var user = new MessageUserDto(1, "TestUser", "#ffffff");
+        var expectedMessages = new List<MessageResponseDto>
         {
-            new() { Id = 1, Creator = "TestUser1", CreatedAt = DateTime.UtcNow },
-            new() { Id = 2, Creator = "TestUser2", CreatedAt = DateTime.UtcNow },
-            new() { Id = 3, Creator = "TestUser3", CreatedAt = DateTime.UtcNow }
+            new(1, "Hello", DateTime.UtcNow, null, user, []),
+            new(2, "World", DateTime.UtcNow, null, user, []),
+            new(3, "!", DateTime.UtcNow, null, user, [])
         };
 
         _mockMessageService.Setup(s => s.GetRecentMessagesAsync(It.IsAny<int>()))
@@ -38,7 +41,7 @@ public class MessagesControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var returnedMessages = Assert.IsAssignableFrom<IEnumerable<Message>>(okResult.Value);
+        var returnedMessages = Assert.IsAssignableFrom<IEnumerable<MessageResponseDto>>(okResult.Value);
         Assert.Equal(3, returnedMessages.Count());
     }
 }

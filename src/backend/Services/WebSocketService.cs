@@ -15,6 +15,7 @@ public interface IWebSocketService
 {
     Task HandleWebSocketConnection(WebSocket webSocket, HttpContext httpContext);
     Task BroadcastMessage(object message);
+    Task BroadcastMessage(string type, object payload);
     Task SendToClient(WebSocket socket, string type, object payload);
 }
 
@@ -35,8 +36,10 @@ public class WebSocketService(
         // Get authenticated user from the HTTP context User (ClaimsPrincipal)
         var user = httpContext.User;
         var username = user.Identity?.Name;
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = int.TryParse(userIdClaim, out var parsed) ? parsed : 0;
 
-        if (user.Identity?.IsAuthenticated != true || string.IsNullOrEmpty(username))
+        if (user.Identity?.IsAuthenticated != true || string.IsNullOrEmpty(username) || userId == 0)
         {
             logger.LogWarning("Unauthorized WebSocket connection attempt");
             await webSocket.CloseAsync(
@@ -78,7 +81,7 @@ public class WebSocketService(
 
                 validationService.ValidateAndThrow(incomingMessage);
 
-                var savedMessage = await messageService.CreateMessageAsync(incomingMessage, username);
+                var savedMessage = await messageService.CreateMessageAsync(incomingMessage, userId);
                 await BroadcastMessage(savedMessage);
             }
         }
@@ -144,7 +147,10 @@ public class WebSocketService(
         }
     }
 
-    public async Task BroadcastMessage(object message)
+    public Task BroadcastMessage(object message) =>
+        BroadcastMessage(WebSocketMessageTypes.Message, message);
+
+    public async Task BroadcastMessage(string type, object payload)
     {
         var deadSockets = new List<WebSocket>();
 
@@ -152,7 +158,7 @@ public class WebSocketService(
         {
             try
             {
-                await SendToClient(client, WebSocketMessageTypes.Message, message);
+                await SendToClient(client, type, payload);
             }
             catch (Exception)
             {
@@ -160,7 +166,6 @@ public class WebSocketService(
             }
         }
 
-        // Clean up dead connections
         foreach (var socket in deadSockets)
         {
             Clients.TryRemove(socket, out _);

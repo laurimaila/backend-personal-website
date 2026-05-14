@@ -47,7 +47,8 @@ public static class ServiceCollectionExtensions
                 connectionString = builder.ConnectionString;
             }
 
-            options.UseNpgsql(connectionString);
+            options.UseNpgsql(connectionString)
+                   .UseSnakeCaseNamingConvention();
         });
 
         // Register contexts
@@ -56,6 +57,7 @@ public static class ServiceCollectionExtensions
 
         // Register repositories
         services.AddScoped<IMessageRepository, MessageRepository>();
+        services.AddScoped<IMessageReactionRepository, MessageReactionRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
 
         // Register services

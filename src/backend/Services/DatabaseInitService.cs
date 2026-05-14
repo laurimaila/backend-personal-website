@@ -1,41 +1,35 @@
+using backend.Configuration;
 using backend.Data;
 using backend.Data.Entities;
 using backend.Repositories;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace backend.Services;
 
-public class DatabaseInitService
+public class DatabaseInitService(
+    ApplicationContext dbContext,
+    IServiceProvider serviceProvider,
+    ILogger<DatabaseInitService> logger,
+    IOptions<ApplicationSettings> settings)
 {
-    private readonly ApplicationContext _dbContext;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<DatabaseInitService> _logger;
-
-    public DatabaseInitService(
-        ApplicationContext dbContext,
-        IServiceProvider serviceProvider,
-        ILogger<DatabaseInitService> logger)
-    {
-        _dbContext = dbContext;
-        _serviceProvider = serviceProvider;
-        _logger = logger;
-    }
+    private readonly ApplicationSettings _settings = settings.Value;
 
     public async Task InitializeAsync()
     {
         try
         {
-            _logger.LogInformation("Starting database initialization");
+            logger.LogInformation("Starting database initialization");
 
-            await _dbContext.Database.MigrateAsync();
+            await dbContext.Database.MigrateAsync();
 
-            // Add a visitor user by default
             await CreateDefaultVisitorUserAsync();
+            await PromoteAdminUserAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to initialize database");
+            logger.LogError(ex, "Failed to initialize database");
             throw;
         }
     }
@@ -44,18 +38,16 @@ public class DatabaseInitService
     {
         try
         {
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateScope();
             var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
 
-            // Check if visitor user exists
             var existingVisitor = await userRepository.GetUserByUsernameAsync("Visitor");
             if (existingVisitor != null)
             {
-                _logger.LogInformation("Visitor user already exists, skipping creation");
+                logger.LogInformation("Visitor user already exists, skipping creation");
                 return;
             }
 
-            // Create visitor user
             var visitorUser = new User
             {
                 Username = "Visitor",
@@ -64,12 +56,38 @@ public class DatabaseInitService
             };
 
             await userRepository.CreateUserAsync(visitorUser);
-            _logger.LogInformation("Default Visitor user created successfully with ID: {UserId}", visitorUser.Id);
+            logger.LogInformation("Default Visitor user created successfully with ID: {UserId}", visitorUser.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create default Visitor user");
+            logger.LogError(ex, "Failed to create default Visitor user");
             throw;
         }
+    }
+
+    private async Task PromoteAdminUserAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_settings.AdminUsername))
+            return;
+
+        using var scope = serviceProvider.CreateScope();
+        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+
+        var user = await userRepository.GetUserByUsernameAsync(_settings.AdminUsername);
+        if (user == null)
+        {
+            logger.LogWarning("ADMIN_USERNAME '{Username}' not found, skipping admin promotion", _settings.AdminUsername);
+            return;
+        }
+
+        if (user.IsAdmin)
+        {
+            logger.LogInformation("User '{Username}' is already admin", _settings.AdminUsername);
+            return;
+        }
+
+        user.IsAdmin = true;
+        await userRepository.UpdateUserAsync(user);
+        logger.LogInformation("User '{Username}' promoted to admin", _settings.AdminUsername);
     }
 }

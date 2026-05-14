@@ -42,4 +42,7 @@ public class ApplicationSettings
 
     [ConfigurationKeyName("BACKEND_VERSION")]
     public string Version { get; set; } = "unknown";
+
+    [ConfigurationKeyName("ADMIN_USERNAME")]
+    public string? AdminUsername { get; set; }
 }

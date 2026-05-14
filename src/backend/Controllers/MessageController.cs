@@ -1,4 +1,4 @@
-using backend.Data.Entities;
+using backend.DTOs;
 using backend.Middleware;
 using backend.Models;
 using backend.Services;
@@ -11,17 +11,20 @@ namespace backend.Controllers;
 [ApiController]
 [Route("api/messages")]
 [Authorize]
-public class MessagesController(IMessageService messageService) : ApiControllerBase
+public class MessagesController(
+    IMessageService messageService,
+    IWebSocketService webSocketService,
+    IValidationService validationService) : ApiControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Message>>> GetMessages([FromQuery] int limit = 50)
+    public async Task<ActionResult<IEnumerable<MessageResponseDto>>> GetMessages([FromQuery] int limit = 50)
     {
         var messages = await messageService.GetRecentMessagesAsync(limit);
         return Ok(messages);
     }
 
     [HttpGet("paged")]
-    public async Task<ActionResult<PagedResult<Message>>> GetMessagesPaged(
+    public async Task<ActionResult<PagedResult<MessageResponseDto>>> GetMessagesPaged(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
@@ -29,16 +32,33 @@ public class MessagesController(IMessageService messageService) : ApiControllerB
         return Ok(result);
     }
 
-    [HttpGet("tukaani")]
-    [AllowAnonymous]
-    public async Task<ActionResult<bool>> TestDeleteAllMessages()
+    [HttpDelete("{id:int}")]
+    public async Task<ActionResult> DeleteMessage(int id)
     {
-        var result = await messageService.DeleteAllMessagesAsync();
-        if (result)
+        await messageService.DeleteMessageAsync(id, CurrentUserId, CurrentIsAdmin);
+        return NoContent();
+    }
+
+    [HttpPost("{id:int}/reactions")]
+    public async Task<ActionResult> ReactToMessage(int id, [FromBody] ReactToMessageDto dto)
+    {
+        validationService.ValidateAndThrow(dto);
+        var reactionEvent = await messageService.ReactToMessageAsync(id, CurrentUserId, dto.Emoji);
+        await webSocketService.BroadcastMessage(WebSocketMessageTypes.Reaction, reactionEvent);
+        return NoContent();
+    }
+
+    [HttpDelete("{id:int}/reactions")]
+    public async Task<ActionResult> RemoveReaction(int id)
+    {
+        var reactionEvent = await messageService.RemoveReactionAsync(id, CurrentUserId);
+        if (reactionEvent == null)
         {
-            return Ok(new { message = "All messages successfully deleted" });
+            throw new ApiException("REACTION_NOT_FOUND", "No reaction found to remove", System.Net.HttpStatusCode.NotFound);
         }
 
-        throw new ApiException("MESSAGES_NOT_FOUND", "No messages to delete", System.Net.HttpStatusCode.NotFound);
+        await webSocketService.BroadcastMessage(WebSocketMessageTypes.Reaction, reactionEvent);
+        return NoContent();
     }
+
 }

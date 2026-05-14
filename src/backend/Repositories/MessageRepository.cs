@@ -8,9 +8,10 @@ namespace backend.Repositories;
 public interface IMessageRepository
 {
     Task<IEnumerable<Message>> GetMessagesAsync(int limit);
+    Task<Message?> GetMessageByIdAsync(int id);
     Task<Message> CreateMessageAsync(Message message);
-
     Task<(IEnumerable<Message> Messages, int Total)> GetMessagesPagedAsync(int page, int pageSize);
+    Task DeleteMessageAsync(Message message);
     Task<bool> DeleteAllMessagesAsync();
 }
 
@@ -20,6 +21,8 @@ public class MessageRepository(IApplicationContext context, ILogger<MessageRepos
     {
         logger.LogInformation("Fetching {Limit} messages", limit);
         var messages = await context.Messages
+            .Include(m => m.CreatorUser)
+            .Include(m => m.Reactions).ThenInclude(r => r.User)
             .OrderByDescending(m => m.CreatedAt)
             .Take(limit)
             .OrderBy(m => m.CreatedAt)
@@ -29,12 +32,20 @@ public class MessageRepository(IApplicationContext context, ILogger<MessageRepos
         return messages ?? Enumerable.Empty<Message>();
     }
 
+    public async Task<Message?> GetMessageByIdAsync(int id)
+    {
+        return await context.Messages.FindAsync(id);
+    }
+
     public async Task<Message> CreateMessageAsync(Message message)
     {
         await context.Messages.AddAsync(message);
         await context.SaveChangesAsync();
-        logger.LogInformation("Successfully created message {MessageId} from {CreatorName}", message.Id, message.Creator);
-        return message;
+        logger.LogInformation("Successfully created message {MessageId} from user {CreatorId}", message.Id, message.CreatorId);
+        return await context.Messages
+            .Include(m => m.CreatorUser)
+            .Include(m => m.Reactions).ThenInclude(r => r.User)
+            .FirstAsync(m => m.Id == message.Id);
     }
 
     public async Task<(IEnumerable<Message> Messages, int Total)> GetMessagesPagedAsync(
@@ -42,7 +53,10 @@ public class MessageRepository(IApplicationContext context, ILogger<MessageRepos
         int pageSize)
     {
         logger.LogInformation("Fetching page {Page} with page size {PageSize}", page, pageSize);
-        var query = context.Messages.OrderByDescending(m => m.CreatedAt);
+        var query = context.Messages
+            .Include(m => m.CreatorUser)
+            .Include(m => m.Reactions).ThenInclude(r => r.User)
+            .OrderByDescending(m => m.CreatedAt);
         var total = await query.CountAsync();
 
         var messages = await query
@@ -52,6 +66,13 @@ public class MessageRepository(IApplicationContext context, ILogger<MessageRepos
             .ToListAsync();
 
         return (messages, total);
+    }
+
+    public async Task DeleteMessageAsync(Message message)
+    {
+        context.Messages.Remove(message);
+        await context.SaveChangesAsync();
+        logger.LogInformation("Deleted message {MessageId}", message.Id);
     }
 
     public async Task<bool> DeleteAllMessagesAsync()

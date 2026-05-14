@@ -15,14 +15,15 @@ public class Message
     [MaxLength(255)]
     public string Content { get; set; } = string.Empty;
 
-    [Required]
-    [Column("creator")]
-    [MaxLength(50)]
-    public string Creator { get; set; } = string.Empty;
-
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
 
     [Column("modified_at")]
     public DateTime? ModifiedAt { get; set; }
+
+    [Column("creator_id")]
+    public int CreatorId { get; set; }
+
+    public User CreatorUser { get; set; } = null!;
+    public ICollection<MessageReaction> Reactions { get; set; } = [];
 }

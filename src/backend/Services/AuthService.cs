@@ -92,11 +92,16 @@ public class AuthService(
 
         var key = Encoding.ASCII.GetBytes(secretKey);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Username)
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Name, user.Username)
         };
+
+        if (user.IsAdmin)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+        }
 
         logger.LogInformation("Adding claims: NameIdentifier={UserId}, Name={Username}", user.Id, user.Username);
 

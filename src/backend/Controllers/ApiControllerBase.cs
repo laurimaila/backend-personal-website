@@ -16,4 +16,6 @@ public abstract class ApiControllerBase : ControllerBase
     }
 
     protected string CurrentUsername => User.Identity?.Name ?? string.Empty;
+
+    protected bool CurrentIsAdmin => User.IsInRole("Admin");
 }
