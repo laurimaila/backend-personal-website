@@ -27,7 +27,7 @@ namespace backend.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_users", x => x.id);
+                    table.PrimaryKey("pk_users", x => x.id);
                 });
 
             migrationBuilder.CreateTable(
@@ -43,9 +43,9 @@ namespace backend.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_messages", x => x.id);
+                    table.PrimaryKey("pk_messages", x => x.id);
                     table.ForeignKey(
-                        name: "FK_messages_users_creator_id",
+                        name: "fk_messages_users_creator_id",
                         column: x => x.creator_id,
                         principalTable: "users",
                         principalColumn: "id",
@@ -64,15 +64,15 @@ namespace backend.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_message_reactions", x => x.id);
+                    table.PrimaryKey("pk_message_reactions", x => x.id);
                     table.ForeignKey(
-                        name: "FK_message_reactions_messages_message_id",
+                        name: "fk_message_reactions_messages_message_id",
                         column: x => x.message_id,
                         principalTable: "messages",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_message_reactions_users_user_id",
+                        name: "fk_message_reactions_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
                         principalColumn: "id",
@@ -80,23 +80,23 @@ namespace backend.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_message_reactions_message_id_user_id",
+                name: "ix_message_reactions_message_id_user_id",
                 table: "message_reactions",
                 columns: new[] { "message_id", "user_id" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_message_reactions_user_id",
+                name: "ix_message_reactions_user_id",
                 table: "message_reactions",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_messages_creator_id",
+                name: "ix_messages_creator_id",
                 table: "messages",
                 column: "creator_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_users_username",
+                name: "ix_users_username",
                 table: "users",
                 column: "username",
                 unique: true);

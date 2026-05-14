@@ -12,7 +12,7 @@ using backend.Data;
 namespace backend.Data.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20260514200523_InitialCreate")]
+    [Migration("20260514210731_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -54,11 +54,13 @@ namespace backend.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("modified_at");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_messages");
 
-                    b.HasIndex("CreatorId");
+                    b.HasIndex("CreatorId")
+                        .HasDatabaseName("ix_messages_creator_id");
 
-                    b.ToTable("messages");
+                    b.ToTable("messages", (string)null);
                 });
 
             modelBuilder.Entity("backend.Data.Entities.MessageReaction", b =>
@@ -84,14 +86,17 @@ namespace backend.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("user_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_message_reactions");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_message_reactions_user_id");
 
                     b.HasIndex("MessageId", "UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("ix_message_reactions_message_id_user_id");
 
-                    b.ToTable("message_reactions");
+                    b.ToTable("message_reactions", (string)null);
                 });
 
             modelBuilder.Entity("backend.Data.Entities.User", b =>
@@ -139,12 +144,14 @@ namespace backend.Data.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("username");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_users");
 
                     b.HasIndex("Username")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_username");
 
-                    b.ToTable("users");
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("backend.Data.Entities.Message", b =>
@@ -153,7 +160,8 @@ namespace backend.Data.Migrations
                         .WithMany()
                         .HasForeignKey("CreatorId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_messages_users_creator_id");
 
                     b.Navigation("CreatorUser");
                 });
@@ -164,13 +172,15 @@ namespace backend.Data.Migrations
                         .WithMany("Reactions")
                         .HasForeignKey("MessageId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_message_reactions_messages_message_id");
 
                     b.HasOne("backend.Data.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_message_reactions_users_user_id");
 
                     b.Navigation("Message");
 
