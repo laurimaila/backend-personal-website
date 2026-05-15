@@ -53,7 +53,8 @@ public class UserController(
             user.Id,
             user.Username,
             user.CreatedAt,
-            user.LastLogin
+            user.LastLogin,
+            user.NameColor
         });
     }
 
