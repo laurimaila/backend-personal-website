@@ -26,7 +26,7 @@ jobs:
 
   build:
     needs: [lint-test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,7 +63,7 @@ jobs:
         with:
           context: .
           file: src/backend/Dockerfile
-          platforms: linux/arm64,linux/amd64
+          platforms: linux/arm64
           push: true
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
